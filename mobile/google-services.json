@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "279969362756",
+    "project_id": "tijuca-flow",
+    "storage_bucket": "tijuca-flow.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:279969362756:android:d4bd54921b93a3bb13dd11",
+        "android_client_info": {
+          "package_name": "com.tijuca.flow"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBo5W1d4YdV1Sr64B9H8toKRJhQ2awkyS4"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

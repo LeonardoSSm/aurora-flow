@@ -1,0 +1,38 @@
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+scrape_configs:
+  - job_name: prometheus
+    static_configs:
+      - targets:
+          - localhost:9090
+
+  - job_name: formhub-api
+    metrics_path: /api/v1/metrics
+    # Token must match METRICS_SECRET_TOKEN in backend .env.
+    # Populate observability/prometheus/metrics_token with the same value.
+    # Leave the file empty (or omit authorization) for dev without a token.
+    authorization:
+      type: Bearer
+      credentials: a3dbb923a40460efa230a4a968f4b315fdfd0873857ef5f28e8ee88d31119be3
+    static_configs:
+      - targets:
+          - host.docker.internal:3000
+        labels:
+          service: formhub-api
+
+  - job_name: postgres
+    static_configs:
+      - targets:
+          - postgres-exporter:9187
+        labels:
+          service: postgres
+
+  - job_name: rabbitmq
+    metrics_path: /metrics
+    static_configs:
+      - targets:
+          - rabbitmq:15692
+        labels:
+          service: rabbitmq

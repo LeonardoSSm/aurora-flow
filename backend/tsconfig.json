@@ -1,0 +1,26 @@
+{
+  "compilerOptions": {
+    "module": "commonjs",
+    "declaration": true,
+    "removeComments": true,
+    "emitDecoratorMetadata": true,
+    "experimentalDecorators": true,
+    "allowSyntheticDefaultImports": true,
+    "target": "es2021",
+    "sourceMap": true,
+    "outDir": "./dist",
+    "baseUrl": "./",
+    "incremental": true,
+    "skipLibCheck": true,
+    "strict": true,
+    "noImplicitAny": true,
+    "forceConsistentCasingInFileNames": true
+  },
+  "ts-node": {
+    // Sem isto o ts-node compila arquivo a arquivo e ignora os `.d.ts` de
+    // `src/types`, então scripts avulsos (migrações, seeds, diagnósticos)
+    // falhavam em módulos sem tipos publicados enquanto o `tsc` do projeto
+    // passava. Divergência entre as duas ferramentas custa caro para depurar.
+    "files": true
+  }
+}

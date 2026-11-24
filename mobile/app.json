@@ -1,0 +1,77 @@
+{
+  "expo": {
+    "name": "Tijuca Flow",
+    "slug": "tijuca-flow",
+    "version": "1.2.1",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "light",
+    "newArchEnabled": true,
+    "backgroundColor": "#1A3C8F",
+    "splash": {
+      "image": "./assets/splash-icon.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#1A3C8F"
+    },
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.tijuca.flow"
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#1A3C8F"
+      },
+      "notification": {
+        "color": "#1A3C8F"
+      },
+      "edgeToEdgeEnabled": true,
+      "predictiveBackGestureEnabled": false,
+      "package": "com.tijuca.flow",
+      "googleServicesFile": "./google-services.json",
+      "versionCode": 5,
+      "allowBackup": false,
+      "blockedPermissions": [
+        "android.permission.RECORD_AUDIO",
+        "android.permission.SYSTEM_ALERT_WINDOW"
+      ]
+    },
+    "web": {
+      "favicon": "./assets/favicon.png"
+    },
+    "plugins": [
+      [
+        "expo-notifications",
+        {
+          "color": "#1A3C8F"
+        }
+      ],
+      "expo-secure-store",
+      "@react-native-community/datetimepicker",
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Permitir acesso à galeria para envio de imagens.",
+          "cameraPermission": "Permitir acesso à câmera para tirar fotos.",
+          "microphonePermission": false
+        }
+      ],
+      [
+        "expo-build-properties",
+        {
+          "android": {
+            "enableMinifyInReleaseBuilds": true,
+            "enableShrinkResourcesInReleaseBuilds": true
+          }
+        }
+      ],
+      "expo-font"
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "1f129d06-43ef-4d1e-a2a6-928af2149e02"
+      }
+    },
+    "owner": "leonardo_2s"
+  }
+}

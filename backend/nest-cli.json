@@ -1,0 +1,8 @@
+{
+  "$schema": "https://json.schemastore.org/nest-cli",
+  "collection": "@nestjs/schematics",
+  "sourceRoot": "src",
+  "compilerOptions": {
+    "assets": ["modules/notifications/email-assets/*.jpg", "modules/notifications/email-assets/*.png"]
+  }
+}

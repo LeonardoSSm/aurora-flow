@@ -1,0 +1,55 @@
+/* Gerado por design-system/scripts/generate.ts a partir de src/tokens.ts — não edite à mão. */
+
+:root {
+  --color-primary: #1A3C8F;
+  --color-primary-dark: #142E6E;
+  --color-primary-light: #EEF2FB;
+  --color-secondary: #F5A623;
+  --color-accent: #2A6B2A;
+  --color-text: #1A1A2E;
+  --color-text-muted: #6B7280;
+  --color-surface: #FFFFFF;
+  --color-background: #F8F9FC;
+  --color-border: #E5E7EB;
+  --color-danger: #DC2626;
+  --color-success: #16A34A;
+  --color-warning: #D97706;
+  --color-primary-ch: 26 60 143;
+  --color-primary-dark-ch: 20 46 110;
+  --color-primary-light-ch: 238 242 251;
+  --color-secondary-ch: 245 166 35;
+  --color-accent-ch: 42 107 42;
+  --color-error: #DC2626;
+  --font-heading: 'Inter', sans-serif;
+  --font-body: 'Inter', sans-serif;
+  --bg-base: #f8f9fc;
+  --bg-surface: #ffffff;
+  --bg-surface-2: #f7fbff;
+  --bg-surface-3: #f0f6ff;
+  --bg-surface-hover: #ebf5ff;
+  --bg-input: #ffffff;
+  --border-default: #e5edf7;
+  --border-strong: #cfdced;
+  --border-subtle: #edf2f9;
+  --text-primary: #0d1d29;
+  --text-secondary: #4a5d7a;
+  --text-muted: #6b7a8d;
+  --text-placeholder: #9aaabb;
+  --color-info: #0284c7;
+}
+
+.dark {
+  --bg-base: #0f172a;
+  --bg-surface: #1e293b;
+  --bg-surface-2: #162032;
+  --bg-surface-3: #1a2744;
+  --bg-surface-hover: #243352;
+  --bg-input: #1e293b;
+  --border-default: #334155;
+  --border-strong: #475569;
+  --border-subtle: #253047;
+  --text-primary: #f1f5f9;
+  --text-secondary: #94a3b8;
+  --text-muted: #64748b;
+  --text-placeholder: #475569;
+}

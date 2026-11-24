@@ -1,0 +1,51 @@
+/* Gerado por design-system/scripts/generate.ts a partir de src/tokens.ts — não edite à mão. */
+
+/* Tema escuro pela classe `.dark` no <html>, como no Tijuca Flow. */
+@custom-variant dark (&:where(.dark, .dark *));
+
+@theme inline {
+  --color-primary: rgb(var(--color-primary-ch));
+  --color-primary-container: rgb(var(--color-primary-dark-ch));
+  --color-brand-primary: rgb(var(--color-primary-ch));
+  --color-brand-primary-dark: rgb(var(--color-primary-dark-ch));
+  --color-brand-primary-light: rgb(var(--color-primary-light-ch));
+  --color-brand-secondary: rgb(var(--color-secondary-ch));
+  --color-brand-accent: rgb(var(--color-accent-ch));
+  --color-surface: var(--bg-base);
+  --color-surface-container-low: var(--bg-surface-2);
+  --color-surface-container-lowest: var(--bg-surface);
+  --color-surface-container-high: var(--bg-surface-3);
+  --color-outline-variant: var(--border-default);
+  --color-on-surface: var(--text-primary);
+  --color-on-surface-variant: var(--text-secondary);
+  --color-bg-base: var(--bg-base);
+  --color-bg-surface: var(--bg-surface);
+  --color-bg-s2: var(--bg-surface-2);
+  --color-bg-s3: var(--bg-surface-3);
+  --color-bg-hover: var(--bg-surface-hover);
+  --color-bg-input: var(--bg-input);
+  --color-border-default: var(--border-default);
+  --color-border-strong: var(--border-strong);
+  --color-border-subtle: var(--border-subtle);
+  --color-tx-primary: var(--text-primary);
+  --color-tx-secondary: var(--text-secondary);
+  --color-tx-muted: var(--text-muted);
+  --color-tx-ph: var(--text-placeholder);
+  --color-status-success: var(--color-success);
+  --color-status-warning: var(--color-warning);
+  --color-status-danger: var(--color-error);
+  --color-status-info: var(--color-info);
+  --font-headline: Manrope, Inter, sans-serif;
+  --font-body: Inter, sans-serif;
+  --shadow-soft: 0 20px 40px rgba(13, 29, 41, 0.06);
+  --animate-fade: fade .18s ease-out;
+
+  @keyframes fade {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+}

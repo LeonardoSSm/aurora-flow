@@ -1,0 +1,481 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Manrope:wght@600;700;800&family=Sora:wght@400;500;600;700&display=swap');
+@import '@xyflow/react/dist/style.css';
+
+/* ── Design-system tokens ───────────────────────────────────────────────────
+   Cores de marca, superfícies, bordas e textos (claro/escuro) vêm do pacote
+   @tijucas/ui — edite design-system/src/tokens.ts e rode `npm run tokens` lá. */
+@import '../../design-system/css/tokens.css';
+
+.dark {
+  /* Destaque legível no escuro para componentes do formulário público (aba ativa da ficha do ERP) */
+  --tf-primary-on-dark: #93c5fd;
+}
+
+/* ── Modal de configuração de nó (Fluxos) ───────────────────────────────────
+   Cores do redesenho que não têm token genérico. No claro, o destaque segue a
+   marca (--color-primary-*, definidas em main.tsx); no escuro o primary perde
+   contraste sobre o surface, então destaque e botão ganham tons próprios. */
+:root {
+  --nc-accent:        rgb(var(--color-primary-ch));
+  --nc-accent-soft:   rgb(var(--color-primary-light-ch));
+  --nc-btn:           rgb(var(--color-primary-ch));
+  --nc-btn-hover:     rgb(var(--color-primary-dark-ch));
+  --nc-input:         #ffffff;
+  --nc-ok:            #15803d;
+  --nc-ok-bg:         #dcfce7;
+  --nc-ok-icon:       #16a34a;
+  --nc-warn:          #b45309;
+  --nc-warn-bg:       #fffbeb;
+  --nc-danger:        #dc2626;
+  --nc-danger-bg:     #fef2f2;
+  --nc-info:          #142e6e;
+  --nc-info-bg:       #f0f6ff;
+  --nc-field-var:     #15803d;
+  --nc-field-var-bg:  #f0fdf4;
+  --nc-seg-track:     #f0f6ff;
+  --nc-seg-active:    #ffffff;
+  --nc-backdrop:      rgba(7, 26, 56, 0.45);
+  --nc-shadow:        0 24px 64px -16px rgba(7, 26, 56, 0.35), 0 0 0 1px rgba(7, 26, 56, 0.04);
+  --nc-nav-shadow:    0 1px 3px rgba(13, 29, 41, 0.08), 0 0 0 1px #e5edf7;
+  --nc-ring:          0 0 0 3px rgba(26, 60, 143, 0.12);
+}
+
+.dark {
+  --nc-accent:        #93c5fd;
+  --nc-accent-soft:   rgba(147, 197, 253, 0.12);
+  --nc-btn:           #2b52b5;
+  --nc-btn-hover:     #3561cc;
+  --nc-input:         #162032;
+  --nc-ok:            #4ade80;
+  --nc-ok-bg:         rgba(22, 163, 74, 0.18);
+  --nc-ok-icon:       #4ade80;
+  --nc-warn:          #fbbf24;
+  --nc-warn-bg:       rgba(217, 119, 6, 0.18);
+  --nc-danger:        #f87171;
+  --nc-danger-bg:     rgba(248, 113, 113, 0.12);
+  --nc-info:          #bfdbfe;
+  --nc-info-bg:       rgba(147, 197, 253, 0.08);
+  --nc-field-var:     #4ade80;
+  --nc-field-var-bg:  rgba(22, 163, 74, 0.14);
+  --nc-seg-track:     #162032;
+  --nc-seg-active:    #334155;
+  --nc-backdrop:      rgba(0, 0, 0, 0.55);
+  --nc-shadow:        0 24px 64px -16px rgba(0, 0, 0, 0.7), 0 0 0 1px rgba(255, 255, 255, 0.06);
+  --nc-nav-shadow:    0 1px 3px rgba(0, 0, 0, 0.3), 0 0 0 1px #334155;
+  --nc-ring:          0 0 0 3px rgba(147, 197, 253, 0.18);
+}
+
+/* Textos do escuro mais claros só dentro do modal (o resto do app mantém os do .dark) */
+.dark .node-config {
+  --text-secondary:   #cbd5e1;
+  --text-muted:       #94a3b8;
+  --text-placeholder: #64748b;
+}
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+*,
+::before,
+::after {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  background: var(--bg-base);
+  color: var(--text-primary);
+  font-family: var(--font-body, Inter, sans-serif);
+  line-height: 1.45;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+#root {
+  min-height: 100vh;
+}
+
+h1,
+h2,
+h3,
+h4 {
+  margin: 0;
+  color: var(--text-primary);
+  font-family: var(--font-heading, Inter, sans-serif);
+}
+
+p {
+  margin: 0;
+  color: var(--text-muted);
+}
+
+button {
+  cursor: pointer;
+}
+
+button:disabled {
+  cursor: not-allowed;
+}
+
+/* Login — nós da arte de fluxo respirando (o movimento dos pontos vive no SVG) */
+@keyframes login-node-pulse {
+  0%,
+  100% {
+    opacity: 0.55;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+.login-node {
+  animation: login-node-pulse 3.6s ease-in-out infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .login-node {
+    animation: none;
+    opacity: 1;
+  }
+}
+
+/* Sidebar — barra de rolagem discreta sobre o azul da barra (a padrao do
+   Chrome desenha um trilho claro que corta o fundo primary) */
+.sidebar-scroll {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.25) transparent;
+}
+.sidebar-scroll::-webkit-scrollbar {
+  width: 6px;
+}
+.sidebar-scroll::-webkit-scrollbar-track {
+  background: transparent;
+}
+.sidebar-scroll::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.22);
+  border-radius: 999px;
+}
+.sidebar-scroll::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.38);
+}
+
+/* Modal de Administracao — barra fina na cor da borda forte, sobre fundo claro */
+.admin-scroll {
+  scrollbar-width: thin;
+  scrollbar-color: var(--border-strong) transparent;
+}
+
+/* React Flow canvas */
+.dark .react-flow__background {
+  background-color: #0f172a;
+}
+.dark .react-flow__background pattern circle,
+.dark .react-flow__background pattern rect {
+  fill: #334155;
+}
+.dark .react-flow__controls {
+  background-color: #1e293b;
+  border-color: #334155;
+}
+.dark .react-flow__controls button {
+  background-color: #1e293b;
+  border-color: #334155;
+  color: #94a3b8;
+  fill: #94a3b8;
+}
+.dark .react-flow__controls button:hover {
+  background-color: #334155;
+}
+.dark .react-flow__minimap {
+  background-color: #1e293b;
+}
+.dark .react-flow__edge path {
+  stroke: #64748b;
+}
+.dark .react-flow__edge.selected path,
+.dark .react-flow__edge:hover path {
+  stroke: #94a3b8;
+}
+
+/* Admin tables */
+.dark table thead tr {
+  background-color: #1e293b;
+}
+.dark table th {
+  color: #94a3b8;
+  border-color: #334155;
+}
+.dark table td {
+  border-color: #334155;
+  color: #cbd5e1;
+}
+.dark table tbody tr:hover {
+  background-color: #1e293b;
+}
+
+/* Public portal — respects OS dark mode without a toggle */
+@media (prefers-color-scheme: dark) {
+  :root:not(.dark):not([data-theme='light']) body {
+    background-color: #0f172a;
+    color: #f1f5f9;
+  }
+}
+
+/* ── Flow Editor Dark Canvas ─────────────────────────────────────────────── */
+
+/* Animated edge — dashes flow from source to target */
+@keyframes flow-edge-flowing {
+  from { stroke-dashoffset: 24; }
+  to   { stroke-dashoffset: 0;  }
+}
+
+/* Pulsing opacity for unconfigured trigger border */
+@keyframes flow-node-pulse {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.35; }
+}
+
+/* ── Handles ── */
+.flow-editor-dark .react-flow__handle {
+  width: 10px !important;
+  height: 10px !important;
+  border-radius: 50% !important;
+  border: 2px solid rgba(255, 255, 255, 0.3) !important;
+  background: rgba(255, 255, 255, 0.1) !important;
+  backdrop-filter: blur(4px);
+  transition: all 0.2s !important;
+}
+.flow-editor-dark .react-flow__handle:hover {
+  border-color: #00c9d4 !important;
+  background: rgba(0, 201, 212, 0.2) !important;
+  box-shadow: 0 0 12px rgba(0, 201, 212, 0.6) !important;
+  transform: scale(1.4) !important;
+}
+.flow-editor-dark .react-flow__handle-connecting {
+  border-color: #00c9d4 !important;
+  box-shadow: 0 0 16px rgba(0, 201, 212, 0.8) !important;
+}
+
+/* ── Node hover lift ── */
+.flow-editor-dark .react-flow__node {
+  transition: transform 0.15s ease;
+}
+.flow-editor-dark .react-flow__node:hover {
+  transform: translateY(-1px);
+}
+.flow-editor-dark .react-flow__node.selected {
+  outline: none;
+}
+
+/* ── Controls dark ── */
+.flow-editor-dark .react-flow__controls {
+  background: rgba(13, 21, 53, 0.9) !important;
+  border: 1px solid rgba(255, 255, 255, 0.08) !important;
+  border-radius: 8px !important;
+  overflow: hidden;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+}
+.flow-editor-dark .react-flow__controls button {
+  background: transparent !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06) !important;
+  color: rgba(255, 255, 255, 0.6) !important;
+  fill: rgba(255, 255, 255, 0.6) !important;
+}
+.flow-editor-dark .react-flow__controls button:hover {
+  background: rgba(255, 255, 255, 0.08) !important;
+  color: rgba(255, 255, 255, 0.9) !important;
+  fill: rgba(255, 255, 255, 0.9) !important;
+}
+.flow-editor-dark .react-flow__controls button:last-child {
+  border-bottom: none !important;
+}
+
+/* ── backdrop-filter fallbacks ── */
+@supports not (backdrop-filter: blur(16px)) {
+  .glass-node-trigger { background: rgba(0,  50, 55, 0.95) !important; }
+  .glass-node-cond    { background: rgba(60, 42,  5, 0.95) !important; }
+  .glass-node-action  { background: rgba(13, 21, 53, 0.95) !important; }
+  .glass-sidebar      { background: rgba(8,  13, 30, 0.98) !important; }
+}
+
+/* ── Flow Editor LIGHT mode ─────────────────────────────────────────────── */
+
+.flow-editor-light .react-flow__background {
+  background-color: #f8f9fc;
+}
+.flow-editor-light .react-flow__background pattern circle,
+.flow-editor-light .react-flow__background pattern rect {
+  fill: #cbd5e1;
+}
+.flow-editor-light .react-flow__controls {
+  background-color: #ffffff;
+  border-color: #e2e8f0;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+.flow-editor-light .react-flow__controls button {
+  background-color: #ffffff;
+  border-color: #e2e8f0;
+  color: #475569;
+  fill: #475569;
+}
+.flow-editor-light .react-flow__controls button:hover {
+  background-color: #f1f5f9;
+}
+.flow-editor-light .react-flow__minimap {
+  background-color: #f1f5f9;
+  border: 1px solid #e2e8f0;
+}
+.flow-editor-light .react-flow__edge path {
+  stroke: #94a3b8;
+}
+.flow-editor-light .react-flow__edge.selected path,
+.flow-editor-light .react-flow__edge:hover path {
+  stroke: #475569;
+}
+.flow-editor-light .react-flow__handle {
+  width: 10px !important;
+  height: 10px !important;
+  border-radius: 50% !important;
+  border: 2px solid #94a3b8 !important;
+  background: #ffffff !important;
+  transition: all 0.2s !important;
+}
+.flow-editor-light .react-flow__handle:hover {
+  border-color: #1a3c8f !important;
+  background: rgba(26, 60, 143, 0.1) !important;
+  box-shadow: 0 0 8px rgba(26, 60, 143, 0.3) !important;
+  transform: scale(1.4) !important;
+}
+.flow-editor-light .react-flow__handle-connecting {
+  border-color: #1a3c8f !important;
+  box-shadow: 0 0 16px rgba(26, 60, 143, 0.5) !important;
+}
+.flow-editor-light .react-flow__node {
+  transition: transform 0.15s ease;
+}
+.flow-editor-light .react-flow__node:hover {
+  transform: translateY(-1px);
+}
+.flow-editor-light .react-flow__node.selected {
+  outline: none;
+}
+
+/* ── NodeLibrary sidebar — LIGHT mode ───────────────────────────────────── */
+
+:root:not(.dark) .glass-sidebar {
+  background: rgba(248, 249, 252, 0.98) !important;
+  border-right: 1px solid #e2e8f0 !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+:root:not(.dark) .glass-sidebar * {
+  color: #0d1d29 !important;
+}
+
+/* ── Flow nodes — LIGHT mode ─────────────────────────────────────────────── */
+
+:root:not(.dark) .glass-node-trigger {
+  background: rgba(0, 201, 212, 0.08) !important;
+  border: 1px solid rgba(0, 201, 212, 0.4) !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08),
+              0 0 0 1px rgba(0, 201, 212, 0.15) !important;
+}
+:root:not(.dark) .glass-node-cond {
+  background: rgba(240, 165, 0, 0.08) !important;
+  border: 1px solid rgba(240, 165, 0, 0.4) !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+:root:not(.dark) .glass-node-action {
+  background: rgba(255, 255, 255, 0.9) !important;
+  border: 1px solid rgba(0, 0, 0, 0.1) !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08) !important;
+}
+:root:not(.dark) .glass-node-trigger *,
+:root:not(.dark) .glass-node-cond *,
+:root:not(.dark) .glass-node-action * {
+  color: #0d1d29 !important;
+}
+
+/* Brand utility classes */
+@layer utilities {
+  .bg-brand-primary {
+    background-color: var(--color-primary);
+  }
+
+  .text-brand-primary {
+    color: var(--color-primary);
+  }
+
+  .border-brand-primary {
+    border-color: var(--color-primary);
+  }
+
+  .bg-brand-secondary {
+    background-color: var(--color-secondary);
+  }
+
+  .text-brand-secondary {
+    color: var(--color-secondary);
+  }
+
+  .bg-brand-primary-light {
+    background-color: var(--color-primary-light);
+  }
+}
+
+/* ── Component helpers ────────────────────────────────────────────────────── */
+
+@layer components {
+  .card {
+    @apply bg-bg-surface border border-border-default rounded-xl;
+  }
+  .card-2 {
+    @apply bg-bg-s2 border border-border-subtle rounded-xl;
+  }
+  .input-base {
+    @apply bg-bg-input border border-border-default text-tx-primary
+           placeholder:text-tx-ph rounded-lg outline-none
+           focus:ring-2 focus:ring-primary/30 focus:border-primary;
+  }
+  .text-body { @apply text-tx-secondary; }
+  .text-label { @apply text-tx-muted text-xs tracking-wide uppercase; }
+}
+
+/* ── react-grid-layout: alça de redimensionar ────────────────────────────────
+   O ícone padrão da lib é um SVG preto a 30% de opacidade — some por completo
+   sobre o fundo escuro dos cards. Troca por um cantinho desenhado com as
+   próprias variáveis de tema, que já resolvem claro/escuro sozinhas.
+   `!important` porque a ordem de carregamento dos dois CSS (o deste arquivo e
+   o `react-grid-layout/css/styles.css`, importado dentro do componente da
+   grade) não é garantida — sem isso, empata a especificidade e quem carregou
+   por último vence, tornando o resultado dependente de ordem de import. */
+.react-resizable-handle {
+  background-image: none !important;
+}
+/* A lib só mostra a alça no hover do card inteiro — bom para não poluir a
+   tela, ruim para quem nunca passaria o mouse justo no canto para descobrir
+   que dá para redimensionar. Um traço sempre visível, ainda que discreto. */
+.react-grid-item > .react-resizable-handle {
+  opacity: 0.5 !important;
+}
+.react-grid-item:hover > .react-resizable-handle {
+  opacity: 1 !important;
+}
+.react-grid-item > .react-resizable-handle::after {
+  right: 4px !important;
+  bottom: 4px !important;
+  width: 8px !important;
+  height: 8px !important;
+  border-right: 2px solid var(--border-strong) !important;
+  border-bottom: 2px solid var(--border-strong) !important;
+  border-radius: 0 0 2px 0 !important;
+  transition: border-color 0.15s ease;
+}
+.react-grid-item > .react-resizable-handle:hover::after {
+  border-color: var(--color-primary) !important;
+}

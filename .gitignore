@@ -1,0 +1,53 @@
+node_modules/
+dist/
+build/
+.turbo/
+.DS_Store
+Thumbs.db
+
+frontend/node_modules/
+frontend/dist/
+frontend/.vite/
+frontend/.env
+frontend/.env.local
+# Cache incremental do tsc (muda a cada build)
+*.tsbuildinfo
+
+backend/node_modules/
+backend/dist/
+backend/.env
+backend/.env.local
+
+erp-lookup/node_modules/
+erp-lookup/dist/
+erp-lookup/.env
+
+# .env da raiz: lido pelo docker-compose (DB_PASSWORD, ERP_LOOKUP_* etc.) — tem segredo
+/.env
+
+coverage/
+*.log
+
+# Prometheus metrics token (production secret — do not commit)
+observability/prometheus/metrics_token
+
+# Uploaded files (local storage — do not commit)
+backend/uploads/
+
+# Mobile (Expo)
+mobile/node_modules/
+mobile/.expo/
+mobile/dist/
+mobile/android/
+mobile/ios/
+
+# Understand-Anything: cache e arquivos temporários da análise (a config .understandignore entra)
+.ua/tmp/
+.ua/intermediate/
+
+# Dumps de depuração do app mobile via adb (uiautomator/screencap)
+mobile/tijuca-*.xml
+mobile/tijuca-*.png
+
+# Saída gerada pelo graphify (grafo, cache, relatórios)
+graphify-out/
