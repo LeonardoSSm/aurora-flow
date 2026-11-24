@@ -82,6 +82,12 @@ O endpoint `POST /flows/:id/test` **não** foi usado como prova do motor.
 
 A queda 2566 → 2374 (backend) e 1243 → 1171 (frontend) corresponde a skips de domínio obsoleto + testes novos de capacidade. O número de **arquivos** frontend permanece 130.
 
+## Commits
+
+- `a1437a7` baseline ciclo 01
+- `f9ab9ef` implementação ciclo 02
+- `1348feb` documentação ciclo 02
+
 ## GitHub Actions
 
 Pipeline em `.github/workflows/ci.yml`: secret scan, lint/build/test backend e frontend, integração com Postgres/RabbitMQ `aurora_flow`, `npm audit` (continue-on-error). Dispara em `main` e `cycle/**`.

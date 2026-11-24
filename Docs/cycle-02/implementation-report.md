@@ -52,6 +52,12 @@ Ver `Docs/cycle-02/security-audit.md`. Correções: SSRF, JWT mínimo, seed de p
 
 Ver `Docs/cycle-02/validation-report.md`.
 
+## Commits nesta branch
+
+- `f9ab9ef` — motor, segurança, ops, testes
+- `1348feb` — documentação cycle-02 e README  
+(hashes do `cycle/02-architectural-decoupling` a partir de `a1437a7`.)
+
 ## Impedimentos
 
 - Sem autorização para reescrever histórico Git remoto.
