@@ -72,6 +72,8 @@ import { StorageService } from '../storage/storage.service';
 import { FlowFieldLabelsService } from './flow-field-labels.service';
 import { fieldTemplateValue } from './lib/flow-field-labels';
 import { resolveEmailList, resolvePath, toEmailList } from '../../common/utils/dot-path';
+import { assertSafeOutboundUrl } from '../../common/security/outbound-url.guard';
+import { disabledFlowNodeMessage, isEnabledFlowNodeType } from './flow-capabilities';
 
 /** Máximo de sub-fluxos aninhados via action_run_flow */
 const MAX_SUBFLOW_DEPTH = 5;
@@ -199,8 +201,6 @@ export class FlowExecutionEngine {
     private readonly attachmentsRepo: Repository<AttachmentEntity>,
     private readonly googleWorkspace: GoogleWorkspaceService,
     private readonly metricsService: MetricsService,
-    private readonly solicitationsService: SolicitationsService,
-    private readonly approvalsService: ApprovalsService,
     private readonly usersService: UsersService,
     private readonly outboundWebhookService: OutboundWebhookService,
     private readonly whatsappConnectorService: WhatsAppConnectorService,
@@ -208,8 +208,24 @@ export class FlowExecutionEngine {
     private readonly erpConnectorService: ErpConnectorService,
     private readonly storageService: StorageService,
     private readonly notificationExecutor: FlowNotificationNodeExecutor,
+    @Optional() private readonly solicitationsService?: SolicitationsService,
+    @Optional() private readonly approvalsService?: ApprovalsService,
     @Optional() private readonly fieldLabels?: FlowFieldLabelsService,
   ) {}
+
+  private processSolicitations(): SolicitationsService {
+    if (!this.solicitationsService) {
+      throw new Error('Domínio de solicitações não está ativo neste produto.');
+    }
+    return this.solicitationsService;
+  }
+
+  private processApprovals(): ApprovalsService {
+    if (!this.approvalsService) {
+      throw new Error('Domínio de aprovações não está ativo neste produto.');
+    }
+    return this.approvalsService;
+  }
 
   async execute(flow: FlowEntity, context: FlowExecutionContext): Promise<NodeExecutionResult[]> {
     const results: NodeExecutionResult[] = [];
@@ -254,6 +270,9 @@ export class FlowExecutionEngine {
   ): Promise<void> {
     if (depth > 50) {
       throw new Error('Limite de profundidade do fluxo excedido (50 níveis).');
+    }
+    if (!isEnabledFlowNodeType(node.type)) {
+      throw new Error(disabledFlowNodeMessage(node.type));
     }
 
     const start = Date.now();
@@ -680,8 +699,12 @@ export class FlowExecutionEngine {
           metadata: ctx.metadata ?? {},
         });
 
+    if (!url) throw new Error('action_webhook requer uma URL.');
+    if (!this.isTestRun(ctx)) {
+      await assertSafeOutboundUrl(url);
+    }
+
     if (this.isTestRun(ctx)) {
-      if (!url) throw new Error('action_webhook requer uma URL.');
       // Cabeçalhos e segredo de assinatura ficam de fora: são credenciais.
       return dryRunOutput(`Chamaria ${method} ${url}.`, {
         method,
@@ -744,6 +767,8 @@ export class FlowExecutionEngine {
       this.assumeInTestRun(ctx, 'response');
       return dryRunOutput(`Chamaria ${method} ${url}. No teste não há resposta.`, { method, url });
     }
+
+    await assertSafeOutboundUrl(url);
 
     const response = await axios.request({
       url,
@@ -872,7 +897,7 @@ export class FlowExecutionEngine {
       );
     }
 
-    const updated = await this.solicitationsService.moveCard(
+    const updated = await this.processSolicitations().moveCard(
       solicitation.id,
       { status: data.status, currentStage: data.currentStage },
       this.buildAutomationActor(ctx),
@@ -901,7 +926,7 @@ export class FlowExecutionEngine {
       );
     }
 
-    const updated = await this.solicitationsService.movePhase(
+    const updated = await this.processSolicitations().movePhase(
       solicitation.id,
       { phaseId: data.phaseId },
       this.buildAutomationActor(ctx),
@@ -924,7 +949,7 @@ export class FlowExecutionEngine {
     phaseId: string,
     ctx: FlowExecutionContext,
   ): Promise<{ label: string } | null> {
-    const phase = await this.solicitationsService.findKanbanPhase(phaseId);
+    const phase = await this.processSolicitations().findKanbanPhase(phaseId);
     if (phase) {
       ctx.metadata = {
         ...(ctx.metadata ?? {}),
@@ -990,7 +1015,7 @@ export class FlowExecutionEngine {
       );
     }
 
-    const approval = await this.approvalsService.createApproval(
+    const approval = await this.processApprovals().createApproval(
       solicitation.id,
       {
         title,
@@ -1022,7 +1047,7 @@ export class FlowExecutionEngine {
   ): Promise<number | null> {
     if (!isApprovalEmailEnabled(data) || approval.status !== ApprovalStatus.PENDING) return null;
     try {
-      const userIds = await this.approvalsService.pendingApproverUserIds(approval.id);
+      const userIds = await this.processApprovals().pendingApproverUserIds(approval.id);
       if (userIds.length === 0) return 0;
       await this.notificationExecutor.execute(
         approvalEmailNotification(data, approval.id, userIds),
@@ -1292,7 +1317,7 @@ export class FlowExecutionEngine {
         ? String(resolvePath(payload, data.idempotencyKeyPath) ?? '').trim() || null
         : null;
 
-    const { solicitation, reused } = await this.solicitationsService.createFromFlowPayload({
+    const { solicitation, reused } = await this.processSolicitations().createFromFlowPayload({
       title,
       description,
       metadata,
@@ -1358,7 +1383,7 @@ export class FlowExecutionEngine {
       );
     }
 
-    const result = await this.solicitationsService.createFromHandoff({
+    const result = await this.processSolicitations().createFromHandoff({
       sourceSolicitationId: solicitation.id,
       targetFormId: formId,
       targetPhaseId: data.phaseId?.trim() ? data.phaseId.trim() : null,
@@ -1454,7 +1479,7 @@ export class FlowExecutionEngine {
       return dryRunOutput('Mudaria o responsável da solicitação.', { userId: data.userId });
     }
 
-    const updated = await this.solicitationsService.updateAssignee(
+    const updated = await this.processSolicitations().updateAssignee(
       solicitation.id,
       { assigneeId: data.userId },
       this.buildAutomationActor(ctx),

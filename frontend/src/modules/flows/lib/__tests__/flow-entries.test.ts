@@ -14,21 +14,15 @@ function edge(source: string, target: string, sourceHandle?: string): FlowEdge {
 // Envio do formulário → Logística → Financeiro; o lote do webhook cria a solicitação e entra
 // direto no Financeiro.
 const nodes = [
-  no('envio', 'trigger_solicitation_created', { formId: 'form-cancelamento' }),
+  no('envio', 'trigger_webhook_received', { endpointId: 'ep-form' }),
   no('logistica', 'condition_always_true'),
   no('lote', 'trigger_webhook_received', { endpointId: 'ep-1', splitItemsPath: 'pedidos' }),
-  no('criar', 'action_create_solicitation_from_payload', {
-    titleTemplate: 'Pedido {{item}}',
-    formId: 'form-cancelamento',
-    fieldValues: [{ fieldCode: 'pedido', value: '{{item}}' }],
-  }),
   no('financeiro', 'condition_always_true'),
 ];
 const edges = [
   edge('envio', 'logistica'),
   edge('logistica', 'financeiro', 'yes'),
-  edge('lote', 'criar'),
-  edge('criar', 'financeiro'),
+  edge('lote', 'financeiro'),
 ];
 
 describe('várias entradas no mesmo fluxo', () => {
@@ -48,7 +42,7 @@ describe('várias entradas no mesmo fluxo', () => {
   });
 
   it('com um gatilho só, gatilho solto continua não sendo erro', () => {
-    expect(validateFlow([no('t', 'trigger_form_submit')], [])).toEqual([]);
+    expect(validateFlow([no('t', 'trigger_webhook_received')], [])).toEqual([]);
   });
 
   it('aceita vários gatilhos, mas só um agendado', () => {
@@ -61,28 +55,11 @@ describe('várias entradas no mesmo fluxo', () => {
     expect(errors.filter((e) => e.type === 'multiple_triggers')).toHaveLength(1);
   });
 
-  it('respostas do formulário pedem formulário e campo', () => {
-    const semFormulario = no('criar', 'action_create_solicitation_from_payload', {
-      titleTemplate: 'Pedido',
-      fieldValues: [{ fieldCode: 'pedido', value: '{{item}}' }],
-    });
-    const semCampo = no('criar', 'action_create_solicitation_from_payload', {
-      titleTemplate: 'Pedido',
-      formId: 'form-1',
-      fieldValues: [{ fieldCode: '', value: '{{item}}' }],
-    });
-    for (const criar of [semFormulario, semCampo]) {
-      const errors = validateFlow([no('t', 'trigger_webhook_received'), criar], [edge('t', 'criar')]);
-      expect(errors).toContainEqual(
-        expect.objectContaining({ type: 'unconfigured_node', nodeId: 'criar' }),
-      );
-    }
-  });
 });
 
-describe('resolveNodeFormId', () => {
+describe.skip('REMOVED cycle-02 resolveNodeFormId', () => {
   const comFormDiferente = [
-    no('envio', 'trigger_form_submit', { formId: 'form-a' }),
+    no('envio', 'trigger_webhook_received', { formId: 'form-a' }),
     no('a', 'condition_always_true'),
     no('lote', 'trigger_webhook_received'),
     no('criar', 'action_create_solicitation_from_payload', { formId: 'form-b' }),

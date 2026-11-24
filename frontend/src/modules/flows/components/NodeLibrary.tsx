@@ -77,6 +77,12 @@ const CATEGORIES: CategoryDef[] = [
         color: '#F0A500',
       },
       {
+        type: 'condition_field_value',
+        label: 'Valor do contexto',
+        Icon: GitBranch,
+        color: '#F0A500',
+      },
+      {
         type: 'condition_response_value',
         label: 'Valor da verificação HTTP',
         Icon: GitBranch,

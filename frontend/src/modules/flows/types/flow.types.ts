@@ -51,6 +51,23 @@ export const FLOW_TRIGGER_NODE_TYPES = [
   'trigger_phase_entered',
 ] as const satisfies readonly FlowTriggerNodeType[];
 
+export const ENABLED_FLOW_NODE_TYPES = [
+  'trigger_webhook_received',
+  'trigger_scheduled',
+  'condition_always_true',
+  'condition_field_value',
+  'condition_response_value',
+  'action_send_email',
+  'action_webhook',
+  'action_http_check',
+  'action_notify_users',
+  'action_google_sheets',
+  'action_send_whatsapp',
+  'action_erp_operation',
+  'action_run_flow',
+  'action_notification',
+] as const satisfies readonly FlowNodeType[];
+
 export const FLOW_NODE_TYPES = [
   ...FLOW_TRIGGER_NODE_TYPES,
   'condition_field_value',

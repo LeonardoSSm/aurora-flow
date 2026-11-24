@@ -41,12 +41,14 @@ export class EnvironmentVariables {
   DB_SLOW_QUERY_THRESHOLD_MS?: string;
 
   @IsString()
+  @MinLength(32)
   JWT_ACCESS_SECRET!: string;
 
   @IsString()
   JWT_ACCESS_EXPIRES_IN!: string;
 
   @IsString()
+  @MinLength(32)
   JWT_REFRESH_SECRET!: string;
 
   @IsString()
@@ -169,7 +171,7 @@ export class EnvironmentVariables {
   RABBITMQ_PASS?: string;
 
   // Mapa de serviços (Admin): endereços internos checados por GET /admin/service-map/status.
-  // Sem valor, valem os da formhub-network do docker-compose.
+  // Sem valor, valem os da aurora-flow-network do docker-compose.
   @IsOptional()
   @IsString()
   SERVICE_MAP_RABBITMQ_URL?: string;

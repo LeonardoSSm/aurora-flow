@@ -28,8 +28,6 @@ function makeEngine() {
     {} as never, // attachmentsRepo
     {} as never, // googleWorkspace
     metricsService as never,
-    {} as never, // solicitationsService
-    {} as never, // approvalsService
     {} as never, // usersService
     {} as never, // outboundWebhookService
     whatsappConnectorService as never,
@@ -43,7 +41,7 @@ function makeEngine() {
 
 const trigger: FlowNode = {
   id: 'trigger',
-  type: 'trigger_form_submit',
+  type: 'trigger_webhook_received',
   position: { x: 0, y: 0 },
   data: {},
 };

@@ -28,6 +28,9 @@ export class AdminSeedIndicator extends HealthIndicator {
     // Precisa bater com o e-mail que UsersService.ensureSeedAdmin() usa pra criar/checar o
     // admin semente — senão /health/ready nunca fica pronto em ambiente nenhum. Já divergiu
     // uma vez (sobrou "admin@formhub.local" de antes do rebrand pra Tijuca Flow).
+    if (process.env.NODE_ENV === 'production' && !process.env.SEED_ADMIN_PASSWORD?.trim()) {
+      return this.getStatus(key, true);
+    }
     const admin = await this.usersService._internalFindByEmail(SEED_ADMIN_EMAIL);
     const up = admin !== null;
     const result = this.getStatus(key, up);

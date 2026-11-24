@@ -102,7 +102,7 @@ describe('InboundWebhookService', () => {
     await expect(
       service.receiveWebhook(
         'token-id',
-        { 'x-formhub-signature': 'sha256='.concat('0'.repeat(64)) },
+        { 'x-aurora-flow-signature': 'sha256='.concat('0'.repeat(64)) },
         '{"ok":true}',
       ),
     ).rejects.toBeInstanceOf(UnauthorizedException);
@@ -212,14 +212,14 @@ describe('InboundWebhookService.receiveList — rota de lista', () => {
     await expect(
       service.receiveList(
         'token-id',
-        { 'x-formhub-signature': `sha256=${hmacService.sign('secret', rawBody)}` },
+        { 'x-aurora-flow-signature': `sha256=${hmacService.sign('secret', rawBody)}` },
         { rawBody, source: 'arquivo' },
       ),
     ).resolves.toMatchObject({ items: 2 });
     await expect(
       service.receiveList(
         'token-id',
-        { 'x-formhub-signature': `sha256=${hmacService.sign('secret', 'outro')}` },
+        { 'x-aurora-flow-signature': `sha256=${hmacService.sign('secret', 'outro')}` },
         { rawBody, source: 'arquivo' },
       ),
     ).rejects.toBeInstanceOf(UnauthorizedException);

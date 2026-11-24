@@ -1,4 +1,10 @@
-import { CanActivate, ExecutionContext, ForbiddenException, Injectable } from '@nestjs/common';
+import {
+  CanActivate,
+  ExecutionContext,
+  ForbiddenException,
+  Injectable,
+  Optional,
+} from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { PERMISSION_KEY } from '../decorators/require-permission.decorator';
 import { isProcessPermission } from '../constants/process-permission-catalog';
@@ -24,7 +30,7 @@ export class PermissionsGuard implements CanActivate {
   constructor(
     private readonly reflector: Reflector,
     private readonly permissions: PermissionsService,
-    private readonly processAccess: ProcessAccessService,
+    @Optional() private readonly processAccess?: ProcessAccessService,
   ) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
@@ -48,7 +54,7 @@ export class PermissionsGuard implements CanActivate {
     }
 
     if (isProcessPermission(required)) {
-      if (!(await this.processAccess.hasAnywhere(user, required))) {
+      if (!this.processAccess || !(await this.processAccess.hasAnywhere(user, required))) {
         throw new ForbiddenException(`Permissão necessária: ${required}.`);
       }
       request.permissionScope = 'all';

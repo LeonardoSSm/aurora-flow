@@ -1,4 +1,4 @@
-import { BadRequestException, ConflictException, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, ConflictException, Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import * as bcrypt from 'bcryptjs';
 import { randomBytes } from 'crypto';
@@ -6,7 +6,7 @@ import { Repository } from 'typeorm';
 import {
   SEED_ADMIN_EMAIL,
   SEED_ADMIN_NAME,
-  SEED_ADMIN_PASSWORD,
+  resolveSeedAdminPassword,
 } from '../../common/constants/product';
 import { BCRYPT_COST_FACTOR } from '../../common/constants/security.constants';
 import { PaginatedResponseDto } from '../../common/dto/paginated-response.dto';
@@ -20,6 +20,8 @@ import { UserResponseDto } from './dto/user-response.dto';
 
 @Injectable()
 export class UsersService {
+  private readonly logger = new Logger(UsersService.name);
+
   constructor(
     @InjectRepository(UserEntity)
     private readonly usersRepository: Repository<UserEntity>,
@@ -285,12 +287,20 @@ export class UsersService {
   // ─── Seed ───────────────────────────────────────────────────────────────────
 
   async ensureSeedAdmin(): Promise<void> {
+    const password = resolveSeedAdminPassword();
+    if (!password) {
+      this.logger.warn(
+        'Admin semente não criado: em produção defina SEED_ADMIN_PASSWORD ou provisione o admin por outro meio.',
+      );
+      return;
+    }
+
     const existing = await this.findEntityByEmail(SEED_ADMIN_EMAIL);
     if (existing) {
       return;
     }
 
-    const passwordHash = await bcrypt.hash(SEED_ADMIN_PASSWORD, BCRYPT_COST_FACTOR);
+    const passwordHash = await bcrypt.hash(password, BCRYPT_COST_FACTOR);
     const admin = this.usersRepository.create({
       fullName: SEED_ADMIN_NAME,
       email: SEED_ADMIN_EMAIL,

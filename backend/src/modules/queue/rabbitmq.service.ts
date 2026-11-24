@@ -285,7 +285,7 @@ export class RabbitMqService implements OnModuleDestroy {
   }
 
   private getUrl(): string {
-    return this.configService.get<string>('RABBITMQ_URL', 'amqp://formhub:formhub@localhost:5672');
+    return this.configService.get<string>('RABBITMQ_URL', 'amqp://aurora_flow:aurora_flow@localhost:5674');
   }
 
   private getDefaultPrefetch(): number {

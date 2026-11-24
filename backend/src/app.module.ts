@@ -10,42 +10,22 @@ import { LoggerModule } from 'nestjs-pino';
 import { AppController } from './app.controller';
 import { validateEnv } from './config/validate-env';
 import { entities } from './database/entities';
-import { AccessModule } from './modules/access/access.module';
-import { AnalyticsModule } from './modules/analytics/analytics.module';
 import { AreasModule } from './modules/areas/areas.module';
-import { AttachmentsModule } from './modules/attachments/attachments.module';
 import { StorageModule } from './modules/storage/storage.module';
-import { ApprovalsModule } from './modules/approvals/approvals.module';
 import { AuditModule } from './modules/audit/audit.module';
-import { ConnectorsModule } from './modules/connectors/connectors.module';
 import { FlowsModule } from './modules/flows/flows.module';
 import { AuthModule } from './modules/auth/auth.module';
-import { AutomationsModule } from './modules/automations/automations.module';
-import { KanbanPhasesModule } from './modules/kanban-phases/kanban-phases.module';
-import { ItemListsModule } from './modules/item-lists/item-lists.module';
-import { StandardQuestionsModule } from './modules/standard-questions/standard-questions.module';
 import { HealthModule } from './modules/health/health.module';
-import { DashboardModule } from './modules/dashboard/dashboard.module';
-import { DashboardsModule } from './modules/dashboards/dashboards.module';
-import { FormsModule } from './modules/forms/forms.module';
 import { GoogleWorkspaceModule } from './modules/google-workspace/google-workspace.module';
 import { IntegrationsModule } from './modules/integrations/integrations.module';
 import { MetricsService } from './modules/observability/metrics.service';
 import { AdminModule } from './modules/admin/admin.module';
 import { ObservabilityModule } from './modules/observability/observability.module';
 import { TypeOrmMetricsLogger } from './modules/observability/typeorm-metrics.logger';
-import { ResponsesModule } from './modules/responses/responses.module';
 import { RolesModule } from './modules/roles/roles.module';
 import { SettingsModule } from './modules/settings/settings.module';
 import { NotificationsModule } from './modules/notifications/notifications.module';
 import { ErpModule } from './modules/integrations/erp/erp.module';
-import { maskErpLookupSearch } from './modules/integrations/erp/lookup/erp-lookup.log';
-import { ErpLookupModule } from './modules/integrations/erp/lookup/erp-lookup.module';
-import { RecordsModule } from './modules/records/records.module';
-import { ReportsModule } from './modules/reports/reports.module';
-import { AiBuilderModule } from './modules/ai-builder/ai-builder.module';
-import { RealtimeModule } from './modules/realtime/realtime.module';
-import { SolicitationsModule } from './modules/solicitations/solicitations.module';
 import { UsersModule } from './modules/users/users.module';
 
 @Module({
@@ -88,7 +68,7 @@ import { UsersModule } from './modules/users/users.module';
               '*.userToken',
               '*.sessionToken',
             ],
-            serializers: { req: maskErpLookupSearch },
+            serializers: { req: (req: unknown) => req },
           },
         };
       },
@@ -122,39 +102,20 @@ import { UsersModule } from './modules/users/users.module';
       },
     }),
     StorageModule,
-    AttachmentsModule,
     AreasModule,
     UsersModule,
     AuthModule,
-    FormsModule,
-    AnalyticsModule,
-    ConnectorsModule,
     IntegrationsModule,
     FlowsModule,
     GoogleWorkspaceModule,
-    DashboardModule,
-    DashboardsModule,
-    ResponsesModule,
-    RecordsModule,
-    SolicitationsModule,
-    ApprovalsModule,
-    AutomationsModule,
-    KanbanPhasesModule,
-    ItemListsModule,
-    StandardQuestionsModule,
     AuditModule,
     RolesModule,
-    AccessModule,
     SettingsModule,
     HealthModule,
     NotificationsModule,
     ObservabilityModule,
     AdminModule,
-    ReportsModule,
     ErpModule,
-    ErpLookupModule,
-    AiBuilderModule,
-    RealtimeModule,
   ],
   controllers: [AppController],
   providers: [

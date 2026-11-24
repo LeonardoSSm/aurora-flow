@@ -1,4 +1,9 @@
-import { Injectable, ServiceUnavailableException, UnauthorizedException } from '@nestjs/common';
+import {
+  Injectable,
+  Optional,
+  ServiceUnavailableException,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { JwtService } from '@nestjs/jwt';
@@ -35,7 +40,7 @@ export class GoogleOAuthService {
     private readonly stateHelper: GoogleStateHelper,
     private readonly profileService: GoogleProfileService,
     private readonly connectionService: GoogleConnectionService,
-    private readonly processAccess: ProcessAccessService,
+    @Optional() private readonly processAccess: ProcessAccessService | undefined,
   ) {}
 
   buildLoginUrl(): string {
@@ -125,7 +130,13 @@ export class GoogleOAuthService {
     const [accessToken, refreshToken, session] = await Promise.all([
       this.jwtService.signAsync(payload),
       this.refreshTokenService.issue(payload, null, null),
-      this.processAccess.sessionPermissions({ sub: user.id, role: user.role }),
+      this.processAccess
+        ? this.processAccess.sessionPermissions({ sub: user.id, role: user.role })
+        : Promise.resolve({
+            permissions: {},
+            processPermissions: {},
+            processesFullAccess: false,
+          }),
     ]);
 
     return { accessToken, refreshToken, user: UserResponseDto.fromEntity(user), ...session };

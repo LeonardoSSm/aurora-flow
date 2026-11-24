@@ -17,6 +17,7 @@ import { UserEntity } from '../../database/entities';
 import { ProcessAccessService } from '../access/process-access.service';
 import { UserResponseDto } from '../users/dto/user-response.dto';
 import { UserInviteService } from '../users/invite/user-invite.service';
+import { PermissionsService } from '../roles/permissions.service';
 import { UsersService } from '../users/users.service';
 import { LoginDto } from './dto/login.dto';
 import { SetPasswordDto } from './dto/set-password.dto';
@@ -41,10 +42,11 @@ export class AuthService {
     private readonly usersService: UsersService,
     private readonly jwtService: JwtService,
     private readonly refreshTokenService: RefreshTokenService,
-    private readonly processAccess: ProcessAccessService,
+    @Optional() private readonly processAccess: ProcessAccessService | undefined,
     private readonly eventEmitter: EventEmitter2,
     private readonly userInviteService: UserInviteService,
     @Optional() private readonly rateLimitService?: LoginRateLimitService,
+    @Optional() private readonly permissions?: PermissionsService,
   ) {}
 
   async login(
@@ -91,7 +93,7 @@ export class AuthService {
     const [accessToken, refreshToken, session] = await Promise.all([
       this.jwtService.signAsync(newPayload),
       this.refreshTokenService.rotate(oldRawToken, ip, userAgent),
-      this.processAccess.sessionPermissions({ sub: user.id, role: user.role }),
+      this.sessionPermissions(user),
     ]);
     return { accessToken, refreshToken, user: UserResponseDto.fromEntity(user), ...session };
   }
@@ -210,8 +212,20 @@ export class AuthService {
     const [accessToken, refreshToken, session] = await Promise.all([
       this.jwtService.signAsync(payload),
       this.refreshTokenService.issue(payload, ip, userAgent),
-      this.processAccess.sessionPermissions({ sub: user.id, role: user.role }),
+      this.sessionPermissions(user),
     ]);
     return { accessToken, refreshToken, user: UserResponseDto.fromEntity(user), ...session };
+  }
+
+  private async sessionPermissions(user: UserEntity): Promise<{
+    permissions: Record<string, PermissionScope>;
+    processPermissions: Record<string, Record<string, ProcessPermissionScope>>;
+    processesFullAccess: boolean;
+  }> {
+    if (this.processAccess) {
+      return this.processAccess.sessionPermissions({ sub: user.id, role: user.role });
+    }
+    const permissions = (await this.permissions?.getAllForRole(user.role)) ?? {};
+    return { permissions, processPermissions: {}, processesFullAccess: false };
   }
 }

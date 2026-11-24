@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { defaultNodeData } from '../../hooks/useFlowEditor';
 import {
-  FLOW_NODE_TYPES,
+  ENABLED_FLOW_NODE_TYPES,
   type FlowNode,
   type FlowNodeData,
   type FlowNodeType,
@@ -38,7 +38,7 @@ describe('getNodeIssues — regras do painel', () => {
     expect(fields('trigger_webhook_received', { payloadFilters: { type: 'x' } })).toEqual([]);
   });
 
-  it('aprovação: título e aprovadores conforme a origem', () => {
+  it.skip('REMOVED cycle-02 aprovação: título e aprovadores conforme a origem', () => {
     expect(fields('action_create_approval', {})).toEqual(['title', 'approvers']);
     expect(
       getNodeIssues('action_create_approval', {
@@ -69,7 +69,7 @@ describe('getNodeIssues — regras do painel', () => {
     ]);
   });
 
-  it('criar solicitação: o título segue o modo (fluxos antigos com titlePath = payload)', () => {
+  it.skip('REMOVED cycle-02 criar solicitação: o título segue o modo (fluxos antigos com titlePath = payload)', () => {
     expect(fields('action_create_solicitation_from_payload', {})).toEqual(['titleTemplate']);
     expect(
       fields('action_create_solicitation_from_payload', { titleSourceMode: 'payload' }),
@@ -88,14 +88,14 @@ describe('getNodeIssues — regras do painel', () => {
   });
 
   it('nós sem campo obrigatório ficam prontos', () => {
-    for (const type of ['trigger_form_submit', 'trigger_sla_warning', 'condition_always_true']) {
+    for (const type of ['trigger_webhook_received', 'condition_always_true']) {
       expect(getNodeIssues(type, {})).toEqual([]);
     }
   });
 });
 
 describe('getNodeIssues × validateFlow', () => {
-  it.each(FLOW_NODE_TYPES)(
+  it.each(ENABLED_FLOW_NODE_TYPES)(
     '%s recém-criado: modal e validação concordam se falta configurar',
     (type) => {
       const data = defaultNodeData(type);
@@ -112,9 +112,7 @@ describe('getNodeIssues × validateFlow', () => {
     ['action_send_email', { toEmail: 'a@b.com' }],
     ['action_webhook', { webhookUrl: 'https://x', method: 'POST' }],
     ['action_http_check', { url: 'https://x', method: 'GET' }],
-    ['action_create_approval', { title: 'T', assignedUserIds: ['u1'] }],
     ['action_erp_operation', { connectorId: 'c1', templateId: 't1' }],
-    ['action_ai_agent', { agentSlug: 'a', apiKey: 'k' }],
     ['action_run_flow', { flowId: 'f1', mode: 'sync' }],
   ];
   it.each(configured)('%s configurado: nenhum dos dois acusa', (type, data) => {

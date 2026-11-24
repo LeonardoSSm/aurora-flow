@@ -112,6 +112,16 @@ describe('PermissionsGuard — permissão de processo', () => {
     );
   });
 
+  it('sem domínio de processo ativo: códigos de processo são recusados', async () => {
+    const guard = new PermissionsGuard(
+      makeReflector('solicitations.act'),
+      { getScope: jest.fn() } as never,
+    );
+    await expect(guard.canActivate(contextOf({ sub: 'u1', role: 'admin' }))).rejects.toBeInstanceOf(
+      ForbiddenException,
+    );
+  });
+
   it('acesso total pelo perfil passa em qualquer código de processo', async () => {
     const guard = new PermissionsGuard(
       makeReflector('forms.edit'),

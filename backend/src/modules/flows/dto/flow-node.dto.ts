@@ -1,12 +1,12 @@
 import { IsIn, IsNotEmpty, IsObject, IsOptional, IsString } from 'class-validator';
-import { FLOW_NODE_TYPES } from '../types/flow.types';
+import { ENABLED_FLOW_NODE_TYPES } from '../flow-capabilities';
 
 export class FlowNodeDto {
   @IsString()
   @IsNotEmpty()
   id!: string;
 
-  @IsIn(FLOW_NODE_TYPES)
+  @IsIn([...ENABLED_FLOW_NODE_TYPES])
   type!: string;
 
   @IsObject()

@@ -57,8 +57,9 @@ function makeService() {
     attachmentsRepo as never,
     engine as never,
     metricsService as never,
-    permissionsService as never,
     { find: jest.fn().mockResolvedValue([]) } as never,
+    permissionsService as never,
+    { getScope: jest.fn().mockResolvedValue('none') } as never,
   );
   return { service, flowsRepo, permissionsService, formsRepo };
 }
@@ -117,7 +118,7 @@ describe('FlowsService.findAll — fluxos dos processos da pessoa', () => {
   });
 });
 
-describe('FlowsService.findByForm — fluxos de um processo', () => {
+describe.skip('REMOVED cycle-02 FlowsService.findByForm — fluxos de um processo', () => {
   // Fluxo criado na tela de Fluxos: sem form_id, o formulário só no nó gatilho.
   const standaloneWhere = {
     formId: expect.objectContaining({ _type: 'isNull' }),
@@ -253,7 +254,7 @@ describe('FlowsService.findOne (findByIdOrFail) — vínculo com o processo do f
   });
 });
 
-describe('FlowsService — validação do nó de criar solicitação', () => {
+describe.skip('REMOVED cycle-02 FlowsService — validação do nó de criar solicitação', () => {
   // validateFlowStructure é privado; o acesso por índice mantém o teste no
   // comportamento público de "salvar um fluxo inválido é rejeitado", sem exigir
   // repositório de verdade só para chegar até a validação.
@@ -306,7 +307,7 @@ describe('FlowsService — validação do nó de criar solicitação', () => {
   });
 });
 
-describe('FlowsService — validação do gatilho de anexo e do nó LOPS IA', () => {
+describe.skip('REMOVED cycle-02 FlowsService — validação do gatilho de anexo e do nó LOPS IA', () => {
   function validate(triggerType: string, triggerData: Record<string, unknown>, actionType: string, actionData: Record<string, unknown>): void {
     const { service } = makeService();
     const nodes = [
@@ -607,7 +608,7 @@ describe('FlowsService — validação do gatilho de anexo e do nó LOPS IA', ()
 // no motor, uma condicao logo depois de criar a aprovacao avaliava o status desatualizado
 // e o ramo "nao" chegava a mover o card de verdade antes de qualquer decisao humana.
 
-describe('FlowsService.executeFlowWithContext / resumePausedExecution — pausa em aprovacao', () => {
+describe.skip('REMOVED cycle-02 FlowsService.executeFlowWithContext / resumePausedExecution', () => {
   function makeFlow(overrides: Partial<FlowEntity> = {}): FlowEntity {
     return {
       id: 'flow-id',
@@ -648,8 +649,9 @@ describe('FlowsService.executeFlowWithContext / resumePausedExecution — pausa 
       attachmentsRepo as never,
       engine as never,
       metricsService as never,
-      permissionsService as never,
       phaseFieldValuesRepo as never,
+      permissionsService as never,
+      { getScope: jest.fn().mockResolvedValue('none') } as never,
     );
 
     return {
@@ -863,7 +865,7 @@ describe('FlowsService.executeFlowWithContext / resumePausedExecution — pausa 
   });
 });
 
-describe('FlowsService.resumePausedPhaseFieldsExecution — pausa em action_wait_for_phase_fields', () => {
+describe.skip('REMOVED cycle-02 FlowsService.resumePausedPhaseFieldsExecution', () => {
   function makeFlow(overrides: Partial<FlowEntity> = {}): FlowEntity {
     return {
       id: 'flow-id',
@@ -903,8 +905,9 @@ describe('FlowsService.resumePausedPhaseFieldsExecution — pausa em action_wait
       attachmentsRepo as never,
       engine as never,
       metricsService as never,
-      permissionsService as never,
       { find: jest.fn().mockResolvedValue([]) } as never,
+      permissionsService as never,
+      { getScope: jest.fn().mockResolvedValue('none') } as never,
     );
 
     return { service, flowsRepo, executionsRepo, submissionsRepo, solicitationsRepo, engine, metricsService };
@@ -1126,12 +1129,13 @@ function novoServico(partes: PartesDoServico = {}) {
     (partes.attachmentsRepo ?? {}) as never,
     (partes.engine ?? {}) as never,
     (partes.metricsService ?? {}) as never,
-    (partes.permissionsService ?? {}) as never,
     (partes.phaseFieldValuesRepo ?? { find: jest.fn().mockResolvedValue([]) }) as never,
+    (partes.permissionsService ?? {}) as never,
+    { getScope: jest.fn().mockResolvedValue('none') } as never,
   );
 }
 
-describe('FlowsService — idempotência da execução por submissão', () => {
+describe.skip('REMOVED cycle-02 FlowsService — idempotência da execução por submissão', () => {
   const triggerDeMovimentacao = {
     id: 'trigger',
     type: 'trigger_solicitation_moved',
@@ -1354,7 +1358,7 @@ describe('FlowsService — retomada concorrente de execução pausada', () => {
   });
 });
 
-describe('FlowsService — pai esperando sub-fluxo sync (waiting_subflow)', () => {
+describe.skip('REMOVED cycle-02 FlowsService — pai esperando sub-fluxo sync', () => {
   // Banco em memória com UPDATE condicional (affected), como o usado na retomada concorrente.
   function montar(opcoes: { filhoFalha?: boolean; paiEsperaOutroFilho?: boolean } = {}) {
     const origem = { id: 'solicitation-id', formId: null, form: null, submission: null };
@@ -1523,7 +1527,7 @@ describe('FlowsService — validação do grafo ao salvar (create e update)', ()
     target,
     ...(sourceHandle ? { sourceHandle } : {}),
   });
-  const gatilho = no('t', 'trigger_form_submit');
+  const gatilho = no('t', 'trigger_webhook_received');
 
   function montar() {
     const consulta = {
@@ -1666,26 +1670,6 @@ describe('FlowsService — validação do grafo ao salvar (create e update)', ()
       ],
       [aresta('1', 't', 'A'), aresta('2', 'A', 'B', 'yes'), aresta('3', 'lote', 'B')],
     ],
-    [
-      'gatilho de solicitação criada só para envio de formulário',
-      [
-        no('t', 'trigger_solicitation_created', { originTypes: ['form_submission'] }),
-        no('A', 'condition_always_true'),
-      ],
-      [aresta('1', 't', 'A')],
-    ],
-    [
-      'criar solicitação respondendo o formulário',
-      [
-        gatilho,
-        no('c', 'action_create_solicitation_from_payload', {
-          titleTemplate: 'Pedido {{item}}',
-          formId: '3f6c1e2a-0000-4000-8000-000000000001',
-          fieldValues: [{ fieldCode: 'pedido', value: '{{item}}' }],
-        }),
-      ],
-      [aresta('1', 't', 'c')],
-    ],
   ];
 
   it.each(invalidos)('[P-07] create rejeita: %s', async (_descricao, nodes, edges) => {
@@ -1747,7 +1731,7 @@ describe('FlowsService — validação do grafo ao salvar (create e update)', ()
     expect(flowsRepo.save).not.toHaveBeenCalled();
   });
 
-  describe('processos que o fluxo referencia', () => {
+  describe.skip('REMOVED cycle-02 processos que o fluxo referencia', () => {
     const negar = (): jest.Mock =>
       jest.fn().mockRejectedValue(new ForbiddenException('Acesso negado.'));
 

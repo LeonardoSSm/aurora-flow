@@ -27,7 +27,7 @@ import type {
 } from './notification-channel';
 
 const DEFAULT_SUBJECT = 'Notificação';
-const FALLBACK_MESSAGE_ID_DOMAIN = 'formhub.local';
+const FALLBACK_MESSAGE_ID_DOMAIN = 'aurora-flow.local';
 
 /**
  * E-mail via SMTP (nodemailer, reaproveitando `FlowMailerService`).

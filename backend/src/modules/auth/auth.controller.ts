@@ -83,7 +83,7 @@ export class AuthController {
       (typeof authHeader === 'string' && authHeader.startsWith('Bearer ')
         ? authHeader.slice(7)
         : null) ??
-      cookies?.['formhub_refresh'] ??
+      cookies?.['aurora_flow_refresh'] ??
       (req.body as { refreshToken?: string } | undefined)?.refreshToken ??
       '';
     const rawAgent = req.headers['user-agent'];
@@ -161,11 +161,11 @@ export class AuthController {
     const cookies = req.cookies as Record<string, string> | undefined;
     // Web: cookie. App mobile: não tem cookie e manda o refresh token no corpo (como no /refresh).
     const bodyToken = (req.body as { refreshToken?: unknown } | undefined)?.refreshToken;
-    const rawToken = cookies?.['formhub_refresh'] ?? (typeof bodyToken === 'string' ? bodyToken : undefined);
+    const rawToken = cookies?.['aurora_flow_refresh'] ?? (typeof bodyToken === 'string' ? bodyToken : undefined);
     if (rawToken) {
       await this.refreshTokenService.revokeByRawToken(rawToken);
     }
-    res.clearCookie('formhub_refresh', { path: '/api/v1/auth' });
+    res.clearCookie('aurora_flow_refresh', { path: '/api/v1/auth' });
     return { message: 'Sessão encerrada com sucesso.' };
   }
 

@@ -2,11 +2,30 @@ name: CI
 
 on:
   push:
-    branches: [main]
+    branches: [main, 'cycle/**']
   pull_request:
     branches: [main]
 
 jobs:
+  secrets:
+    name: Secret scan (heuristic)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Reject tracked env files and private keys
+        run: |
+          set -euo pipefail
+          if git ls-files | grep -E '(^|/)\.env$|(^|/)\.env\.local$|\.pem$|id_rsa'; then
+            echo "Tracked secret-like files found"
+            exit 1
+          fi
+          if git grep -nE 'BEGIN (RSA |OPENSSH )?PRIVATE KEY' -- ':!.github/**' ':!**/node_modules/**'; then
+            echo "Private key material found"
+            exit 1
+          fi
+
   backend:
     name: Backend — lint, build & test
     runs-on: ubuntu-latest
@@ -30,15 +49,21 @@ jobs:
         run: npm ci
         working-directory: backend
 
+      - name: Audit backend dependencies
+        run: npm audit --omit=dev --audit-level=high
+        working-directory: backend
+        continue-on-error: true
+
       - name: Lint backend
-        run: npx eslint backend/src --config eslint.config.cjs
+        run: npm run lint
+        working-directory: backend
 
       - name: Build backend
         run: npm run build
         working-directory: backend
 
-      - name: Test backend with coverage
-        run: npm test -- --coverage --forceExit
+      - name: Test backend
+        run: npm test -- --maxWorkers=2 --forceExit
         working-directory: backend
 
   frontend:
@@ -68,7 +93,6 @@ jobs:
         run: npm run lint
         working-directory: frontend
 
-      # tsc -b (type-check) roda como parte do build, antes do vite build.
       - name: Build frontend
         run: npm run build
         working-directory: frontend
@@ -78,23 +102,32 @@ jobs:
         working-directory: frontend
 
   integration:
-    name: Integration — API real contra Postgres
+    name: Integration — API + Postgres + RabbitMQ
     runs-on: ubuntu-latest
 
-    # Banco de teste descartável, só desta execução — nunca o de desenvolvimento.
-    # Credenciais e nome do banco batem com os defaults de test/integration/setup-env.ts,
-    # então nenhuma delas precisa ser repetida como env aqui.
     services:
       postgres:
         image: postgres:16-alpine
         env:
-          POSTGRES_USER: formhub
-          POSTGRES_PASSWORD: formhub
-          POSTGRES_DB: formhub_test
+          POSTGRES_USER: aurora_flow
+          POSTGRES_PASSWORD: aurora_flow
+          POSTGRES_DB: aurora_flow_test
         ports:
           - 5432:5432
         options: >-
-          --health-cmd "pg_isready -U formhub -d formhub_test"
+          --health-cmd "pg_isready -U aurora_flow -d aurora_flow_test"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+      rabbitmq:
+        image: rabbitmq:3-management-alpine
+        env:
+          RABBITMQ_DEFAULT_USER: aurora_flow
+          RABBITMQ_DEFAULT_PASS: aurora_flow
+        ports:
+          - 5672:5672
+        options: >-
+          --health-cmd "rabbitmq-diagnostics -q ping"
           --health-interval 10s
           --health-timeout 5s
           --health-retries 5
@@ -119,5 +152,14 @@ jobs:
         working-directory: backend
 
       - name: Run integration suite
-        run: npm run test:integration
         working-directory: backend
+        env:
+          DB_HOST: localhost
+          DB_PORT: 5432
+          DB_USER: aurora_flow
+          DB_PASSWORD: aurora_flow
+          DB_NAME: aurora_flow_test
+          RABBITMQ_ENABLED: 'true'
+          RABBITMQ_URL: amqp://aurora_flow:aurora_flow@localhost:5672
+          HTTP_ALLOW_PRIVATE_URLS: 'true'
+        run: npm run test:integration

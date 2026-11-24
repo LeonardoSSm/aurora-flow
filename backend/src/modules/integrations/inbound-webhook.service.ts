@@ -301,7 +301,7 @@ export class InboundWebhookService {
   private getSignature(headers: InboundWebhookHeaders): string | null {
     return (
       this.getHeader(headers, 'x-hub-signature-256') ??
-      this.getHeader(headers, 'x-formhub-signature')
+      this.getHeader(headers, 'x-aurora-flow-signature')
     );
   }
 

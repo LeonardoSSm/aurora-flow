@@ -19,6 +19,10 @@ jest.mock('axios', () => ({
   default: { request: (...a: unknown[]) => mockAxios.request(...a) },
 }));
 
+beforeAll(() => {
+  process.env.HTTP_ALLOW_PRIVATE_URLS = 'true';
+});
+
 function makeSolicitation(overrides: Partial<SolicitationEntity> = {}): SolicitationEntity {
   return {
     id: 'solicitation-id',
@@ -114,8 +118,6 @@ function makeEngine() {
     attachmentsRepo as never,
     googleWorkspace as never,
     metricsService as never,
-    solicitationsService as never,
-    approvalsService as never,
     usersService as never,
     outboundWebhookService as never,
     whatsappConnectorService as never,
@@ -123,6 +125,8 @@ function makeEngine() {
     erpConnectorService as never,
     storageService as never,
     notificationExecutor as never,
+    solicitationsService as never,
+    approvalsService as never,
   );
 
   return {
@@ -147,6 +151,19 @@ function makeEngine() {
   };
 }
 
+describe('FlowExecutionEngine — nós descontinuados', () => {
+  it('recusa executar gatilho de formulário', async () => {
+    const { engine } = makeEngine();
+    const flow = makeFlow(
+      [{ id: 't', type: 'trigger_form_submit', position: { x: 0, y: 0 }, data: {} }],
+      [],
+    );
+    await expect(engine.execute(flow, { eventName: 'responses.submitted' })).rejects.toThrow(
+      /descontinuado/,
+    );
+  });
+});
+
 function terminalNode(id: string): FlowNode {
   return {
     id,
@@ -156,12 +173,12 @@ function terminalNode(id: string): FlowNode {
   };
 }
 
-describe('FlowExecutionEngine solicitation nodes', () => {
+describe.skip('REMOVED cycle-02 FlowExecutionEngine solicitation nodes', () => {
   it('condition_solicitation_status equals direciona para yes/no corretamente', async () => {
     const { engine } = makeEngine();
     const flow = makeFlow(
       [
-        { id: 'trigger', type: 'trigger_solicitation_created', position: { x: 0, y: 0 }, data: {} },
+        { id: 'trigger', type: 'trigger_webhook_received', position: { x: 0, y: 0 }, data: {} },
         {
           id: 'condition',
           type: 'condition_solicitation_status',
@@ -195,7 +212,7 @@ describe('FlowExecutionEngine solicitation nodes', () => {
     const { engine } = makeEngine();
     const flow = makeFlow(
       [
-        { id: 'trigger', type: 'trigger_solicitation_created', position: { x: 0, y: 0 }, data: {} },
+        { id: 'trigger', type: 'trigger_webhook_received', position: { x: 0, y: 0 }, data: {} },
         {
           id: 'condition',
           type: 'condition_solicitation_priority',
@@ -231,7 +248,7 @@ describe('FlowExecutionEngine solicitation nodes', () => {
     solicitationsService.moveCard.mockResolvedValue(updated);
     const flow = makeFlow(
       [
-        { id: 'trigger', type: 'trigger_solicitation_created', position: { x: 0, y: 0 }, data: {} },
+        { id: 'trigger', type: 'trigger_webhook_received', position: { x: 0, y: 0 }, data: {} },
         {
           id: 'action',
           type: 'action_update_solicitation_status',
@@ -260,7 +277,7 @@ describe('FlowExecutionEngine solicitation nodes', () => {
     approvalsService.createApproval.mockResolvedValue({ id: 'approval-id' });
     const flow = makeFlow(
       [
-        { id: 'trigger', type: 'trigger_solicitation_created', position: { x: 0, y: 0 }, data: {} },
+        { id: 'trigger', type: 'trigger_webhook_received', position: { x: 0, y: 0 }, data: {} },
         {
           id: 'action',
           type: 'action_create_approval',
@@ -299,7 +316,7 @@ describe('FlowExecutionEngine solicitation nodes', () => {
     });
     const flow = makeFlow(
       [
-        { id: 'trigger', type: 'trigger_solicitation_created', position: { x: 0, y: 0 }, data: {} },
+        { id: 'trigger', type: 'trigger_webhook_received', position: { x: 0, y: 0 }, data: {} },
         {
           id: 'action',
           type: 'action_create_approval',
@@ -402,7 +419,7 @@ describe('FlowExecutionEngine solicitation nodes', () => {
     );
     const flow = makeFlow(
       [
-        { id: 'trigger', type: 'trigger_solicitation_created', position: { x: 0, y: 0 }, data: {} },
+        { id: 'trigger', type: 'trigger_webhook_received', position: { x: 0, y: 0 }, data: {} },
         {
           id: 'action',
           type: 'action_create_approval',
@@ -435,7 +452,7 @@ describe('FlowExecutionEngine solicitation nodes', () => {
     const { engine, approvalsService } = makeEngine();
     const flow = makeFlow(
       [
-        { id: 'trigger', type: 'trigger_solicitation_created', position: { x: 0, y: 0 }, data: {} },
+        { id: 'trigger', type: 'trigger_webhook_received', position: { x: 0, y: 0 }, data: {} },
         {
           id: 'action',
           type: 'action_create_approval',
@@ -465,7 +482,7 @@ describe('FlowExecutionEngine solicitation nodes', () => {
   describe('action_create_approval — aprovadores externos (por e-mail)', () => {
     function approvalFlow(
       data: Record<string, unknown>,
-      triggerType: 'trigger_solicitation_created' | 'trigger_webhook_received' = 'trigger_solicitation_created',
+      triggerType: 'trigger_webhook_received' | 'trigger_webhook_received' = 'trigger_webhook_received',
     ) {
       return makeFlow(
         [
@@ -665,7 +682,7 @@ describe('FlowExecutionEngine solicitation nodes', () => {
       });
       const flow = makeFlow(
         [
-          { id: 'trigger', type: 'trigger_solicitation_created', position: { x: 0, y: 0 }, data: {} },
+          { id: 'trigger', type: 'trigger_webhook_received', position: { x: 0, y: 0 }, data: {} },
           {
             id: 'approval',
             type: 'action_create_approval',
@@ -936,7 +953,7 @@ describe('FlowExecutionEngine solicitation nodes', () => {
     solicitationsService.updateAssignee.mockResolvedValue(updated);
     const flow = makeFlow(
       [
-        { id: 'trigger', type: 'trigger_solicitation_created', position: { x: 0, y: 0 }, data: {} },
+        { id: 'trigger', type: 'trigger_webhook_received', position: { x: 0, y: 0 }, data: {} },
         {
           id: 'action',
           type: 'action_assign_responsible',
@@ -964,7 +981,7 @@ describe('FlowExecutionEngine solicitation nodes', () => {
     approvalsService.createApproval.mockResolvedValue({ id: 'approval-id' });
     const flow = makeFlow(
       [
-        { id: 'trigger', type: 'trigger_solicitation_created', position: { x: 0, y: 0 }, data: {} },
+        { id: 'trigger', type: 'trigger_webhook_received', position: { x: 0, y: 0 }, data: {} },
         {
           id: 'condition',
           type: 'condition_solicitation_priority',
@@ -1008,7 +1025,7 @@ describe('FlowExecutionEngine solicitation nodes', () => {
     });
     const flow = makeFlow(
       [
-        { id: 'trigger', type: 'trigger_form_submit', position: { x: 0, y: 0 }, data: {} },
+        { id: 'trigger', type: 'trigger_webhook_received', position: { x: 0, y: 0 }, data: {} },
         {
           id: 'webhook',
           type: 'action_webhook',
@@ -1131,7 +1148,7 @@ function makeChildFlow(id = 'child-flow-id'): FlowEntity {
     id,
     formId: null,
     nodes: [
-      { id: 'trigger', type: 'trigger_solicitation_created', position: { x: 0, y: 0 }, data: {} },
+      { id: 'trigger', type: 'trigger_webhook_received', position: { x: 0, y: 0 }, data: {} },
     ],
     edges: [],
   } as unknown as FlowEntity;
@@ -1145,7 +1162,7 @@ describe('FlowExecutionEngine — action_run_flow', () => {
 
     const parentFlow = makeFlow(
       [
-        { id: 'trigger', type: 'trigger_solicitation_created', position: { x: 0, y: 0 }, data: {} },
+        { id: 'trigger', type: 'trigger_webhook_received', position: { x: 0, y: 0 }, data: {} },
         {
           id: 'run',
           type: 'action_run_flow',
@@ -1177,7 +1194,7 @@ describe('FlowExecutionEngine — action_run_flow', () => {
 
     const parentFlow = makeFlow(
       [
-        { id: 'trigger', type: 'trigger_solicitation_created', position: { x: 0, y: 0 }, data: {} },
+        { id: 'trigger', type: 'trigger_webhook_received', position: { x: 0, y: 0 }, data: {} },
         {
           id: 'run',
           type: 'action_run_flow',
@@ -1200,7 +1217,7 @@ describe('FlowExecutionEngine — action_run_flow', () => {
 
     const flowA = makeFlow(
       [
-        { id: 'trigger', type: 'trigger_solicitation_created', position: { x: 0, y: 0 }, data: {} },
+        { id: 'trigger', type: 'trigger_webhook_received', position: { x: 0, y: 0 }, data: {} },
         {
           id: 'run',
           type: 'action_run_flow',
@@ -1227,7 +1244,7 @@ describe('FlowExecutionEngine — action_run_flow', () => {
 
     const deepFlow = makeFlow(
       [
-        { id: 'trigger', type: 'trigger_solicitation_created', position: { x: 0, y: 0 }, data: {} },
+        { id: 'trigger', type: 'trigger_webhook_received', position: { x: 0, y: 0 }, data: {} },
         {
           id: 'run',
           type: 'action_run_flow',
@@ -1254,7 +1271,7 @@ describe('FlowExecutionEngine — action_run_flow', () => {
 
     const parentFlow = makeFlow(
       [
-        { id: 'trigger', type: 'trigger_solicitation_created', position: { x: 0, y: 0 }, data: {} },
+        { id: 'trigger', type: 'trigger_webhook_received', position: { x: 0, y: 0 }, data: {} },
         {
           id: 'run',
           type: 'action_run_flow',
@@ -1278,7 +1295,7 @@ describe('FlowExecutionEngine — action_run_flow', () => {
 
     const parentFlow = makeFlow(
       [
-        { id: 'trigger', type: 'trigger_solicitation_created', position: { x: 0, y: 0 }, data: {} },
+        { id: 'trigger', type: 'trigger_webhook_received', position: { x: 0, y: 0 }, data: {} },
         {
           id: 'run',
           type: 'action_run_flow',
@@ -1310,7 +1327,7 @@ describe('FlowExecutionEngine — action_run_flow', () => {
 
     const parentFlow = makeFlow(
       [
-        { id: 'trigger', type: 'trigger_solicitation_created', position: { x: 0, y: 0 }, data: {} },
+        { id: 'trigger', type: 'trigger_webhook_received', position: { x: 0, y: 0 }, data: {} },
         {
           id: 'run',
           type: 'action_run_flow',
@@ -1459,7 +1476,7 @@ describe('FlowExecutionEngine — action_http_check + condition_response_value',
   });
 });
 
-describe('FlowExecutionEngine — action_ai_agent', () => {
+describe.skip('REMOVED cycle-02 FlowExecutionEngine — action_ai_agent', () => {
   let fetchSpy: jest.SpyInstance;
 
   beforeEach(() => {
@@ -1746,7 +1763,7 @@ describe('FlowExecutionEngine — action_ai_agent', () => {
   });
 });
 
-describe('FlowExecutionEngine — action_create_approval com scope: phase', () => {
+describe.skip('REMOVED cycle-02 FlowExecutionEngine — action_create_approval com scope: phase', () => {
   it('cria a aprovação escopada à fase (ctx.metadata.phaseId) e roteia pelo perfil da fase', async () => {
     const { engine, approvalsService } = makeEngine();
     approvalsService.createApproval.mockResolvedValue({ id: 'approval-id', phaseId: 'phase-1' });
@@ -1936,7 +1953,7 @@ describe('FlowExecutionEngine — action_create_approval com scope: phase', () =
     function approvalFlow(emailApprovers?: Record<string, unknown>) {
       return makeFlow(
         [
-          { id: 'trigger', type: 'trigger_solicitation_created', position: { x: 0, y: 0 }, data: {} },
+          { id: 'trigger', type: 'trigger_webhook_received', position: { x: 0, y: 0 }, data: {} },
           {
             id: 'aprovar',
             type: 'action_create_approval',
@@ -2030,7 +2047,7 @@ describe('FlowExecutionEngine — action_create_approval com scope: phase', () =
 
     const flow = makeFlow(
       [
-        { id: 'trigger', type: 'trigger_solicitation_created', position: { x: 0, y: 0 }, data: {} },
+        { id: 'trigger', type: 'trigger_webhook_received', position: { x: 0, y: 0 }, data: {} },
         { id: 'mover', type: 'action_move_phase', position: { x: 0, y: 0 }, data: { phaseId: 'phase-log' } },
         {
           id: 'aprovar',
@@ -2068,7 +2085,7 @@ describe('FlowExecutionEngine — action_create_approval com scope: phase', () =
   });
 });
 
-describe('FlowExecutionEngine — condition_approval_result', () => {
+describe.skip('REMOVED cycle-02 FlowExecutionEngine — condition_approval_result', () => {
   function makeConditionFlow(): FlowEntity {
     return makeFlow(
       [
@@ -2157,7 +2174,7 @@ describe('FlowExecutionEngine — condition_approval_result', () => {
   });
 });
 
-describe('FlowExecutionEngine — action_wait_for_phase_fields', () => {
+describe.skip('REMOVED cycle-02 FlowExecutionEngine — action_wait_for_phase_fields', () => {
   it('pausa a execução com waitingPhaseId e não segue para os filhos', async () => {
     const { engine } = makeEngine();
     const flow = makeFlow(
@@ -2238,7 +2255,7 @@ describe('FlowExecutionEngine — action_wait_for_phase_fields', () => {
   });
 });
 
-describe('FlowExecutionEngine — action_move_phase', () => {
+describe.skip('REMOVED cycle-02 FlowExecutionEngine — action_move_phase', () => {
   it('chama movePhase com o phaseId do nó', async () => {
     const { engine, solicitationsService } = makeEngine();
     const updated = makeSolicitation({ currentPhaseId: 'phase-concluido' } as never);
@@ -2331,7 +2348,7 @@ describe('FlowExecutionEngine — condition_field_value (operadores)', () => {
     const { engine } = makeEngine();
     const flow = makeFlow(
       [
-        { id: 'trigger', type: 'trigger_form_submit', position: { x: 0, y: 0 }, data: {} },
+        { id: 'trigger', type: 'trigger_webhook_received', position: { x: 0, y: 0 }, data: {} },
         { id: 'cond', type: 'condition_field_value', position: { x: 0, y: 0 }, data: data as never },
         terminalNode('yes-node'),
         terminalNode('no-node'),
@@ -2394,7 +2411,7 @@ describe('FlowExecutionEngine — condition_field_value (operadores)', () => {
   });
 });
 
-describe('FlowExecutionEngine — action_create_approval em sequência', () => {
+describe.skip('REMOVED cycle-02 FlowExecutionEngine — action_create_approval em sequência', () => {
   function fluxoComDuasAlcadas(): FlowEntity {
     return makeFlow(
       [
@@ -2502,7 +2519,7 @@ describe('FlowExecutionEngine — action_create_approval em sequência', () => {
   });
 });
 
-describe('FlowExecutionEngine — action_run_flow com sub-fluxo que pausa', () => {
+describe.skip('REMOVED cycle-02 FlowExecutionEngine — action_run_flow com sub-fluxo que pausa', () => {
   it('[P-04] registra a execução do filho como waiting_approval, com approvalId e pausedNodeId, e não como success', async () => {
     const { engine, flowsRepo, executionsRepo, approvalsService } = makeEngine();
     approvalsService.createApproval.mockResolvedValue({
@@ -2513,7 +2530,7 @@ describe('FlowExecutionEngine — action_run_flow com sub-fluxo que pausa', () =
       id: 'child-flow-id',
       formId: null,
       nodes: [
-        { id: 'child-trigger', type: 'trigger_solicitation_created', position: { x: 0, y: 0 }, data: {} },
+        { id: 'child-trigger', type: 'trigger_webhook_received', position: { x: 0, y: 0 }, data: {} },
         {
           id: 'child-approval-node',
           type: 'action_create_approval',
@@ -2530,7 +2547,7 @@ describe('FlowExecutionEngine — action_run_flow com sub-fluxo que pausa', () =
     flowsRepo.findOne.mockResolvedValue(filho);
     const pai = makeFlow(
       [
-        { id: 'trigger', type: 'trigger_solicitation_created', position: { x: 0, y: 0 }, data: {} },
+        { id: 'trigger', type: 'trigger_webhook_received', position: { x: 0, y: 0 }, data: {} },
         {
           id: 'run',
           type: 'action_run_flow',
@@ -2570,7 +2587,7 @@ describe('FlowExecutionEngine — action_run_flow com sub-fluxo que pausa', () =
       id: 'child-flow-id',
       formId: null,
       nodes: [
-        { id: 'child-trigger', type: 'trigger_solicitation_created', position: { x: 0, y: 0 }, data: {} },
+        { id: 'child-trigger', type: 'trigger_webhook_received', position: { x: 0, y: 0 }, data: {} },
         {
           id: 'child-approval-node',
           type: 'action_create_approval',
@@ -2582,7 +2599,7 @@ describe('FlowExecutionEngine — action_run_flow com sub-fluxo que pausa', () =
     });
     const pai = makeFlow(
       [
-        { id: 'trigger', type: 'trigger_solicitation_created', position: { x: 0, y: 0 }, data: {} },
+        { id: 'trigger', type: 'trigger_webhook_received', position: { x: 0, y: 0 }, data: {} },
         {
           id: 'run',
           type: 'action_run_flow',
@@ -2627,7 +2644,7 @@ describe('FlowExecutionEngine — execução de teste (metadata.testRun)', () =>
     partes.googleWorkspace.isUserGoogleConnectedById.mockResolvedValue(true);
     const flow = makeFlow(
       [
-        { id: 'trigger', type: 'trigger_form_submit', position: { x: 0, y: 0 }, data: {} },
+        { id: 'trigger', type: 'trigger_webhook_received', position: { x: 0, y: 0 }, data: {} },
         {
           id: 'email',
           type: 'action_send_email',
@@ -2696,7 +2713,7 @@ describe('FlowExecutionEngine — execução de teste (metadata.testRun)', () =>
   });
 });
 
-describe('FlowExecutionEngine — teste manual simula as ações (metadata.testRun)', () => {
+describe.skip('REMOVED cycle-02 FlowExecutionEngine — teste manual simula as ações', () => {
   const P = { x: 0, y: 0 };
   let fetchSpy: jest.SpyInstance;
 
@@ -2716,17 +2733,8 @@ describe('FlowExecutionEngine — teste manual simula as ações (metadata.testR
     action_http_check: { url: 'https://api.exemplo.com/status', method: 'GET' },
     action_notify_users: { userIds: ['user-1'], message: 'Aviso' },
     action_google_sheets: { spreadsheetId: 'planilha-1' },
-    action_update_solicitation_status: { status: SolicitationStatus.IN_PROGRESS },
-    action_move_kanban_card: { status: SolicitationStatus.IN_PROGRESS, currentStage: 'Análise' },
-    action_create_approval: { title: 'Aprovar lote {{lote}}', assignedUserIds: ['aprovador-1'] },
-    action_create_solicitation_from_payload: { titleTemplate: 'Pedido {{lote}}' },
-    action_forward_to_process: { formId: 'form-destino', titleTemplate: 'Atendimento {{lote}}' },
-    action_assign_responsible: { userId: 'user-2' },
     action_send_whatsapp: { recipientType: 'requester', message: 'Oi' },
     action_erp_operation: { connectorId: 'erp-1', templateId: 'tpl-1' },
-    action_ai_agent: { agentSlug: 'validador-de-etiquetas', apiKey: 'chave' },
-    action_wait_for_phase_fields: { phaseId: 'fase-2', phaseLabel: 'Produção' },
-    action_move_phase: { phaseId: 'fase-3', phaseLabel: 'Concluído' },
     action_run_flow: { flowId: 'child-flow-id', mode: 'sync', passContext: false },
   };
 
@@ -2827,7 +2835,7 @@ describe('FlowExecutionEngine — teste manual simula as ações (metadata.testR
     });
   }
 
-  function fluxoComUmaAcao(tipo: string, data: Record<string, unknown>, gatilho = 'trigger_form_submit') {
+  function fluxoComUmaAcao(tipo: string, data: Record<string, unknown>, gatilho = 'trigger_webhook_received') {
     return makeFlow(
       [
         { id: 'gatilho', type: gatilho, position: P, data: {} },
@@ -2930,7 +2938,7 @@ describe('FlowExecutionEngine — teste manual simula as ações (metadata.testR
     const { engine } = montar();
 
     const results = await engine.execute(
-      fluxoComUmaAcao('action_move_phase', ACOES.action_move_phase, 'trigger_form_submit'),
+      fluxoComUmaAcao('action_move_phase', ACOES.action_move_phase, 'trigger_webhook_received'),
       contextoDoTeste(),
     );
 
@@ -2944,7 +2952,7 @@ describe('FlowExecutionEngine — teste manual simula as ações (metadata.testR
     const { engine, efeitosChamados } = montar();
 
     const results = await engine.execute(
-      fluxoComUmaAcao('action_move_phase', ACOES.action_move_phase, 'trigger_solicitation_created'),
+      fluxoComUmaAcao('action_move_phase', ACOES.action_move_phase, 'trigger_webhook_received'),
       contextoDoTeste(),
     );
 
@@ -2956,11 +2964,11 @@ describe('FlowExecutionEngine — teste manual simula as ações (metadata.testR
   });
 
   it.each([
-    ['action_move_phase', {}, 'trigger_solicitation_created', 'action_move_phase requer phaseId.'],
+    ['action_move_phase', {}, 'trigger_webhook_received', 'action_move_phase requer phaseId.'],
     ['action_ai_agent', { apiKey: 'chave' }, 'trigger_attachment_uploaded', 'action_ai_agent requer agentSlug'],
-    ['action_send_email', { subject: 'x', body: 'y' }, 'trigger_form_submit', 'requer ao menos um destinatário'],
-    ['action_webhook', { method: 'POST' }, 'trigger_form_submit', 'action_webhook requer uma URL.'],
-    ['action_create_approval', { title: 'x' }, 'trigger_solicitation_created', 'requer assignedUserIds'],
+    ['action_send_email', { subject: 'x', body: 'y' }, 'trigger_webhook_received', 'requer ao menos um destinatário'],
+    ['action_webhook', { method: 'POST' }, 'trigger_webhook_received', 'action_webhook requer uma URL.'],
+    ['action_create_approval', { title: 'x' }, 'trigger_webhook_received', 'requer assignedUserIds'],
   ])('%s com configuração incompleta falha no teste', async (tipo, data, gatilho, erro) => {
     const { engine } = montar();
 
@@ -2974,7 +2982,7 @@ describe('FlowExecutionEngine — teste manual simula as ações (metadata.testR
     const { engine, efeitosChamados } = montar();
     const flow = makeFlow(
       [
-        { id: 'gatilho', type: 'trigger_form_submit', position: P, data: {} },
+        { id: 'gatilho', type: 'trigger_webhook_received', position: P, data: {} },
         { id: 'criar', type: 'action_create_solicitation_from_payload', position: P, data: ACOES.action_create_solicitation_from_payload },
         { id: 'mover', type: 'action_move_phase', position: P, data: ACOES.action_move_phase },
       ] as unknown as FlowNode[],
@@ -3014,7 +3022,7 @@ describe('FlowExecutionEngine — teste manual simula as ações (metadata.testR
     const { engine, efeitosChamados } = montar();
     const flow = makeFlow(
       [
-        { id: 'gatilho', type: 'trigger_solicitation_created', position: P, data: {} },
+        { id: 'gatilho', type: 'trigger_webhook_received', position: P, data: {} },
         { id: 'status', type: 'condition_solicitation_status', position: P, data: { operator: 'equals', value: 'new' } },
         { id: 'sim', type: 'action_notify_users', position: P, data: ACOES.action_notify_users },
         { id: 'nao', type: 'action_send_email', position: P, data: ACOES.action_send_email },
@@ -3040,7 +3048,7 @@ describe('FlowExecutionEngine — teste manual simula as ações (metadata.testR
     const { engine } = montar();
     const flow = makeFlow(
       [
-        { id: 'gatilho', type: 'trigger_form_submit', position: P, data: {} },
+        { id: 'gatilho', type: 'trigger_webhook_received', position: P, data: {} },
         { id: 'checar', type: 'action_http_check', position: P, data: ACOES.action_http_check },
         { id: 'resposta', type: 'condition_response_value', position: P, data: { path: 'ok', operator: 'equals', value: 'true' } },
       ] as unknown as FlowNode[],
@@ -3062,7 +3070,7 @@ describe('FlowExecutionEngine — teste manual simula as ações (metadata.testR
     const { engine } = montar();
     const flow = makeFlow(
       [
-        { id: 'gatilho', type: 'trigger_form_submit', position: P, data: {} },
+        { id: 'gatilho', type: 'trigger_webhook_received', position: P, data: {} },
         { id: 'campo', type: 'condition_field_value', position: P, data: { fieldCode: 'lote', operator: 'equals', value: 'L1' } },
       ] as unknown as FlowNode[],
       [{ id: 'e1', source: 'gatilho', target: 'campo' }],
@@ -3096,7 +3104,7 @@ describe('FlowExecutionEngine — teste manual simula as ações (metadata.testR
   });
 });
 
-describe('FlowExecutionEngine — aprovador dinâmico não resolvido', () => {
+describe.skip('REMOVED cycle-02 FlowExecutionEngine — aprovador dinâmico não resolvido', () => {
   it('avisa quem tem flows.manage, citando a solicitação e o e-mail que falhou', async () => {
     const { engine, usersService, notificationsRepo, approvalsService } = makeEngine();
     usersService.findActiveByEmail.mockResolvedValue(null);
@@ -3140,7 +3148,7 @@ describe('FlowExecutionEngine — aprovador dinâmico não resolvido', () => {
   });
 });
 
-describe('FlowExecutionEngine — teste manual: "Mover para fase" passa a fase adiante', () => {
+describe.skip('REMOVED cycle-02 FlowExecutionEngine — teste manual: Mover para fase', () => {
   it('a aprovação de fase logo depois é simulada, sem acusar falta de fase', async () => {
     const { engine, solicitationsService } = makeEngine();
     solicitationsService.findKanbanPhase.mockResolvedValue({
@@ -3150,7 +3158,7 @@ describe('FlowExecutionEngine — teste manual: "Mover para fase" passa a fase a
     });
     const flow = makeFlow(
       [
-        { id: 'lote', type: 'trigger_solicitation_created', position: { x: 0, y: 0 }, data: {} },
+        { id: 'lote', type: 'trigger_webhook_received', position: { x: 0, y: 0 }, data: {} },
         {
           id: 'mover',
           type: 'action_move_phase',
@@ -3188,7 +3196,7 @@ describe('FlowExecutionEngine — várias entradas no mesmo fluxo', () => {
   function fluxoComDuasEntradas(): FlowEntity {
     return makeFlow(
       [
-        { id: 'envio', type: 'trigger_solicitation_created', position: { x: 0, y: 0 }, data: {} },
+        { id: 'envio', type: 'trigger_webhook_received', position: { x: 0, y: 0 }, data: {} },
         terminalNode('logistica'),
         { id: 'lote', type: 'trigger_webhook_received', position: { x: 0, y: 0 }, data: {} },
         terminalNode('financeiro'),
@@ -3241,7 +3249,7 @@ describe('FlowExecutionEngine — várias entradas no mesmo fluxo', () => {
     flowsRepo.findOne.mockResolvedValue(makeChildFlow());
     const pai = makeFlow(
       [
-        { id: 'envio', type: 'trigger_solicitation_created', position: { x: 0, y: 0 }, data: {} },
+        { id: 'envio', type: 'trigger_webhook_received', position: { x: 0, y: 0 }, data: {} },
         { id: 'lote', type: 'trigger_webhook_received', position: { x: 0, y: 0 }, data: {} },
         {
           id: 'run',
@@ -3270,7 +3278,7 @@ describe('FlowExecutionEngine — várias entradas no mesmo fluxo', () => {
     );
   });
 
-  describe('action_create_solicitation_from_payload respondendo o formulário', () => {
+  describe.skip('REMOVED cycle-02 action_create_solicitation_from_payload respondendo o formulário', () => {
     function fluxoDoLote(fieldValues: unknown): FlowEntity {
       return makeFlow(
         [
@@ -3422,7 +3430,7 @@ describe('FlowExecutionEngine — várias entradas no mesmo fluxo', () => {
   });
 });
 
-describe('FlowExecutionEngine — action_forward_to_process', () => {
+describe.skip('REMOVED cycle-02 FlowExecutionEngine — action_forward_to_process', () => {
   function fluxoQueEncaminha(data: Record<string, unknown>): FlowEntity {
     return makeFlow(
       [

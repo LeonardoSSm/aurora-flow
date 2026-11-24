@@ -4,16 +4,14 @@ import {
   isFlowTriggerNodeType,
 } from './types/flow.types';
 
-describe('flow.types SLA triggers', () => {
-  it('registra trigger_sla_warning como gatilho válido', () => {
-    expect(FLOW_TRIGGER_NODE_TYPES).toContain('trigger_sla_warning');
-    expect(FLOW_NODE_TYPES).toContain('trigger_sla_warning');
-    expect(isFlowTriggerNodeType('trigger_sla_warning')).toBe(true);
-  });
+import { isEnabledFlowNodeType } from './flow-capabilities';
 
-  it('registra trigger_sla_breached como gatilho válido', () => {
-    expect(FLOW_TRIGGER_NODE_TYPES).toContain('trigger_sla_breached');
+describe('flow.types SLA triggers', () => {
+  it('ainda reconhece gatilhos SLA no tipo, mas não os habilita', () => {
+    expect(FLOW_TRIGGER_NODE_TYPES).toContain('trigger_sla_warning');
     expect(FLOW_NODE_TYPES).toContain('trigger_sla_breached');
-    expect(isFlowTriggerNodeType('trigger_sla_breached')).toBe(true);
+    expect(isFlowTriggerNodeType('trigger_sla_warning')).toBe(true);
+    expect(isEnabledFlowNodeType('trigger_sla_warning')).toBe(false);
+    expect(isEnabledFlowNodeType('trigger_sla_breached')).toBe(false);
   });
 });

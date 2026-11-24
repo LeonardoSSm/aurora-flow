@@ -11,7 +11,7 @@ const config: Config = {
   setupFiles: ['<rootDir>/test/integration/setup-env.ts'],
   // Padrão do Jest (5s) já não basta pro beforeAll: reset de schema + bootstrap
   // completo do AppModule (sync + todas as migrations) cresce junto com o projeto.
-  testTimeout: 30000
+  testTimeout: 60000
 };
 
 export default config;

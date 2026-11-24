@@ -19,7 +19,7 @@ import { PermissionsGuard } from '../../common/guards/permissions.guard';
 import { AuditService } from '../audit/audit.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import type { JwtPayload } from '../auth/types/jwt-payload.type';
-import { ProcessAccessService } from '../access/process-access.service';
+import { PermissionsService } from '../roles/permissions.service';
 import { NotificationsService, type NotificationSummary } from '../notifications/notifications.service';
 import { PreviewNotificationDto, QueryFlowNotificationsDto } from './dto/notification.dto';
 import { FlowNotificationNodeExecutor } from './notification/flow-notification-node.executor';
@@ -43,7 +43,7 @@ export class FlowNotificationsController {
     private readonly flowsService: FlowsService,
     private readonly notificationsService: NotificationsService,
     private readonly nodeExecutor: FlowNotificationNodeExecutor,
-    private readonly processAccess: ProcessAccessService,
+    private readonly permissions: PermissionsService,
     private readonly audit: AuditService,
   ) {}
 
@@ -149,6 +149,7 @@ export class FlowNotificationsController {
   }
 
   private async canViewDetails(user: JwtPayload): Promise<boolean> {
-    return this.processAccess.hasAnywhere(user, 'flows.manage');
+    const scope = await this.permissions.getScope(user.role, 'flows.manage');
+    return scope !== 'none';
   }
 }

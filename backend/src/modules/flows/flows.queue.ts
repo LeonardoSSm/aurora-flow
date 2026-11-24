@@ -1,6 +1,8 @@
 import type { FlowTriggerNodeType } from './types/flow.types';
 
-export const DEFAULT_FLOW_SUBMISSION_QUEUE = 'formhub.flows.submission';
+import { DEFAULT_FLOW_QUEUE } from '../../common/constants/product';
+
+export const DEFAULT_FLOW_SUBMISSION_QUEUE = DEFAULT_FLOW_QUEUE;
 
 export type FlowSubmissionJob = {
   kind?: 'submission';

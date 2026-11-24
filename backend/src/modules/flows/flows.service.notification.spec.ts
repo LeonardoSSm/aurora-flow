@@ -43,13 +43,13 @@ function makeService() {
     {} as never,
     {} as never,
     {} as never,
-    permissionsService as never,
     {} as never,
+    permissionsService as never,
   );
   return { service, flowsRepo };
 }
 
-const trigger = (): FlowNodeDto => ({ id: 'trigger', type: 'trigger_form_submit', position: { x: 0, y: 0 }, data: {} }) as never;
+const trigger = (): FlowNodeDto => ({ id: 'trigger', type: 'trigger_webhook_received', position: { x: 0, y: 0 }, data: {} }) as never;
 
 const notification = (data: Record<string, unknown> = {}): FlowNodeDto =>
   ({

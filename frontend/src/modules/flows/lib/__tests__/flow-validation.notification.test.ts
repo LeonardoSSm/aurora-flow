@@ -8,7 +8,7 @@ function node(id: string, type: FlowNodeType, data: FlowNodeData = {}): FlowNode
 }
 const edge = (source: string, target: string): FlowEdge => ({ id: `${source}-${target}`, source, target });
 
-const trigger = node('trigger', 'trigger_form_submit');
+const trigger = node('trigger', 'trigger_webhook_received');
 const validNotification = (data: FlowNodeData = {}) =>
   node('n1', 'action_notification', {
     channel: 'email',

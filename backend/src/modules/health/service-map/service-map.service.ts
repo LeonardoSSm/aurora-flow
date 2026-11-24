@@ -26,7 +26,7 @@ export const ERP_LOOKUP_SLOW_MS = 2_000;
 const BACKEND_DISK_CHECK_TIMEOUT_MS = 2_000;
 const DEFAULT_QUEUE_WARN = 1_000;
 
-/** Endereços padrão dentro da `formhub-network` do docker-compose. */
+/** Endereços padrão dentro da `aurora-flow-network` do docker-compose. */
 const DEFAULT_URLS = {
   rabbitmq: 'http://rabbitmq:15672',
   evolution: 'http://evolution-api:8080',
@@ -168,7 +168,7 @@ export class ServiceMapService {
       (error as { code?: string } | null)?.code;
     if (code === 'ECONNREFUSED') return 'Conexão recusada: o container está parado ou a porta não responde.';
     if (code === 'ENOTFOUND' || code === 'EAI_ADDRINFO' || code === 'EAI_AGAIN') {
-      return 'Endereço não encontrado na rede: o container está parado ou fora da formhub-network.';
+      return 'Endereço não encontrado na rede: o container está parado ou fora da aurora-flow-network.';
     }
     if (code === 'ECONNRESET' || code === 'UND_ERR_SOCKET') {
       return 'A conexão caiu antes da resposta: o serviço não está atendendo nessa porta.';
@@ -217,8 +217,8 @@ export class ServiceMapService {
     // Não reaproveita RABBITMQ_MANAGEMENT_URL: no .env de desenvolvimento ele aponta para localhost,
     // que dentro do container não é o RabbitMQ.
     const base = this.url('SERVICE_MAP_RABBITMQ_URL', DEFAULT_URLS.rabbitmq);
-    const user = this.env('RABBITMQ_USER') ?? 'formhub';
-    const password = this.env('RABBITMQ_PASSWORD') ?? this.env('RABBITMQ_PASS') ?? 'formhub';
+    const user = this.env('RABBITMQ_USER') ?? 'aurora_flow';
+    const password = this.env('RABBITMQ_PASSWORD') ?? this.env('RABBITMQ_PASS') ?? 'aurora_flow';
     const headers = { Authorization: `Basic ${Buffer.from(`${user}:${password}`).toString('base64')}` };
 
     const overview = await this.get(`${base}/api/overview`, headers);

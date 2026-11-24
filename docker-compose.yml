@@ -1,26 +1,28 @@
+name: aurora-flow
+
 services:
   # ── Infraestrutura (profile: app) ────────────────────────────────────────────
 
   postgres:
     image: postgres:16-alpine
-    container_name: formhub-postgres
+    container_name: aurora-flow-postgres
     restart: unless-stopped
     profiles: [app]
     environment:
-      POSTGRES_DB: formhub
-      POSTGRES_USER: formhub
-      POSTGRES_PASSWORD: ${DB_PASSWORD:-formhub}
+      POSTGRES_DB: ${DB_NAME:-aurora_flow}
+      POSTGRES_USER: ${DB_USER:-aurora_flow}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-aurora_flow}
     ports:
-      - "5432:5432"
+      - "${POSTGRES_PORT:-5434}:5432"
     volumes:
-      - formhub_pg_data:/var/lib/postgresql/data
+      - aurora_flow_pg_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U formhub -d formhub"]
+      test: ["CMD-SHELL", "pg_isready -U aurora_flow -d aurora_flow"]
       interval: 10s
       timeout: 5s
       retries: 5
     networks:
-      - formhub-network
+      - aurora-flow-network
     deploy:
       resources:
         limits:
@@ -28,17 +30,17 @@ services:
 
   rabbitmq:
     image: rabbitmq:3-management-alpine
-    container_name: formhub-rabbitmq
+    container_name: aurora-flow-rabbitmq
     restart: unless-stopped
     profiles: [app]
     environment:
-      RABBITMQ_DEFAULT_USER: ${RABBITMQ_USER:-formhub}
-      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASS:-formhub}
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_USER:-aurora_flow}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASS:-aurora_flow}
     ports:
-      - "5672:5672"
-      - "15672:15672"
+      - "${RABBITMQ_PORT:-5674}:5672"
+      - "${RABBITMQ_MANAGEMENT_PORT:-15674}:15672"
     volumes:
-      - formhub_rabbitmq_data:/var/lib/rabbitmq
+      - aurora_flow_rabbitmq_data:/var/lib/rabbitmq
       - ./observability/rabbitmq/enabled_plugins:/etc/rabbitmq/enabled_plugins:ro
     healthcheck:
       test: ["CMD", "rabbitmq-diagnostics", "ping"]
@@ -46,7 +48,7 @@ services:
       timeout: 5s
       retries: 5
     networks:
-      - formhub-network
+      - aurora-flow-network
     deploy:
       resources:
         limits:
@@ -54,7 +56,7 @@ services:
 
   evolution-api:
     image: atendai/evolution-api:latest
-    container_name: formhub-evolution
+    container_name: aurora-flow-evolution
     restart: unless-stopped
     profiles: [app]
     ports:
@@ -62,12 +64,12 @@ services:
     environment:
       SERVER_URL: ${WHATSAPP_EVOLUTION_PUBLIC_URL:-http://localhost:8082}
       AUTHENTICATION_TYPE: apikey
-      AUTHENTICATION_API_KEY: ${WHATSAPP_EVOLUTION_API_KEY:-formhub-evolution-key-2026}
+      AUTHENTICATION_API_KEY: ${WHATSAPP_EVOLUTION_API_KEY:-aurora-flow-evolution-key-2026}
       AUTHENTICATION_EXPOSE_IN_FETCH_INSTANCES: "true"
       DATABASE_ENABLED: "true"
       DATABASE_PROVIDER: postgresql
-      DATABASE_CONNECTION_URI: "postgresql://formhub:${DB_PASSWORD:-formhub}@postgres:5432/evolution?schema=public"
-      DATABASE_CONNECTION_CLIENT_NAME: evolution_formhub
+      DATABASE_CONNECTION_URI: "postgresql://${DB_USER:-aurora_flow}:${DB_PASSWORD:-aurora_flow}@postgres:5432/evolution?schema=public"
+      DATABASE_CONNECTION_CLIENT_NAME: aurora_flow_evolution
       DATABASE_SAVE_DATA_INSTANCE: "true"
       DATABASE_SAVE_DATA_NEW_MESSAGE: "true"
       DATABASE_SAVE_MESSAGE_UPDATE: "true"
@@ -88,7 +90,7 @@ services:
     volumes:
       - evolution_data:/evolution/instances
     networks:
-      - formhub-network
+      - aurora-flow-network
     depends_on:
       postgres:
         condition: service_healthy
@@ -107,7 +109,7 @@ services:
     build:
       context: ./backend
       dockerfile: Dockerfile
-    container_name: formhub-backend
+    container_name: aurora-flow-backend
     restart: unless-stopped
     profiles: [app]
     env_file:
@@ -116,26 +118,28 @@ services:
       NODE_ENV: ${NODE_ENV:-production}
       DB_HOST: postgres
       DB_PORT: 5432
-      DB_PASSWORD: ${DB_PASSWORD:-formhub}
+      DB_USER: ${DB_USER:-aurora_flow}
+      DB_NAME: ${DB_NAME:-aurora_flow}
+      DB_PASSWORD: ${DB_PASSWORD:-aurora_flow}
       DB_AUTO_MIGRATE: "false"
-      RABBITMQ_URL: amqp://${RABBITMQ_USER:-formhub}:${RABBITMQ_PASS:-formhub}@rabbitmq:5672
+      RABBITMQ_URL: amqp://${RABBITMQ_USER:-aurora_flow}:${RABBITMQ_PASS:-aurora_flow}@rabbitmq:5672
       WHATSAPP_EVOLUTION_BASE_URL: http://evolution-api:8080
-      CORS_ORIGIN: ${CORS_ORIGIN:-http://localhost:5173}
-      FRONTEND_URL: ${FRONTEND_URL:-http://localhost:5173}
+      CORS_ORIGIN: ${CORS_ORIGIN:-http://localhost:5174}
+      FRONTEND_URL: ${FRONTEND_URL:-http://localhost:5174}
     ports:
-      - "3000:3000"
+      - "${API_PORT:-3010}:3000"
     volumes:
       # Sem isso, todo anexo enviado (fotos de etiqueta, etc.) vive só na camada
       # gravável descartável do container — some no próximo rebuild/recreate,
       # mesmo a linha no Postgres (que tem volume próprio) continuando existir.
-      - formhub_uploads:/app/uploads
+      - aurora_flow_uploads:/app/uploads
     depends_on:
       postgres:
         condition: service_healthy
       rabbitmq:
         condition: service_healthy
     networks:
-      - formhub-network
+      - aurora-flow-network
     healthcheck:
       test: ["CMD-SHELL", "wget -qO- http://localhost:3000/api/v1/health || exit 1"]
       interval: 15s
@@ -152,46 +156,46 @@ services:
       context: ./frontend
       dockerfile: Dockerfile
       args:
-        VITE_API_URL: ${VITE_API_URL:-http://localhost:3000/api/v1}
-        VITE_APP_URL: ${VITE_APP_URL:-http://localhost:5173}
+        VITE_API_URL: ${VITE_API_URL:-http://localhost:3010/api/v1}
+        VITE_APP_URL: ${VITE_APP_URL:-http://localhost:5174}
         VITE_TURNSTILE_SITE_KEY: ${VITE_TURNSTILE_SITE_KEY:-}
         VITE_GRAFANA_URL: ${VITE_GRAFANA_URL:-http://localhost:3001}
         VITE_PROMETHEUS_URL: ${VITE_PROMETHEUS_URL:-http://localhost:9090}
-        VITE_RABBITMQ_MANAGEMENT_URL: ${VITE_RABBITMQ_MANAGEMENT_URL:-http://localhost:15672}
-    container_name: formhub-frontend
+        VITE_RABBITMQ_MANAGEMENT_URL: ${VITE_RABBITMQ_MANAGEMENT_URL:-http://localhost:15674}
+    container_name: aurora-flow-frontend
     restart: unless-stopped
     profiles: [app]
     ports:
-      - "5173:80"
+      - "${FRONTEND_PORT:-5174}:80"
     depends_on:
       backend:
         condition: service_healthy
     networks:
-      - formhub-network
+      - aurora-flow-network
     deploy:
       resources:
         limits:
           memory: 64m
 
   # API de consultas ao banco do ERP (MySQL) para os campos "Lista do ERP".
-  # Sem "ports": só quem está na formhub-network (o backend) chega nela, por
+  # Sem "ports": só quem está na aurora-flow-network (o backend) chega nela, por
   # http://erp-lookup:3100. Valores vêm das variáveis ERP_LOOKUP_* do .env da raiz;
   # sem elas a API sobe "não configurada" (503 nas consultas) e não derruba nada.
   erp-lookup:
     build:
       context: ./erp-lookup
       dockerfile: Dockerfile
-    container_name: tijucaflow-erp-lookup
+    container_name: aurora-flow-erp-lookup
     restart: unless-stopped
-    profiles: [app]
+    profiles: [legacy]
     environment:
       NODE_ENV: ${NODE_ENV:-production}
       PORT: 3100
       LOOKUP_API_TOKEN: ${ERP_LOOKUP_API_TOKEN:-}
       ERP_DB_HOST: ${ERP_LOOKUP_DB_HOST:-}
       ERP_DB_PORT: ${ERP_LOOKUP_DB_PORT:-3306}
-      ERP_DB_NAME: ${ERP_LOOKUP_DB_NAME:-tijuca_lookup}
-      ERP_DB_USER: ${ERP_LOOKUP_DB_USER:-tijuca_lookup}
+      ERP_DB_NAME: ${ERP_LOOKUP_DB_NAME:-aurora_flow_lookup}
+      ERP_DB_USER: ${ERP_LOOKUP_DB_USER:-aurora_flow_lookup}
       ERP_DB_PASSWORD: ${ERP_LOOKUP_DB_PASSWORD:-}
       ERP_DB_CONNECTION_LIMIT: ${ERP_LOOKUP_DB_CONNECTION_LIMIT:-10}
       ERP_DB_QUERY_TIMEOUT_MS: ${ERP_LOOKUP_DB_QUERY_TIMEOUT_MS:-5000}
@@ -199,7 +203,7 @@ services:
     expose:
       - "3100"
     networks:
-      - formhub-network
+      - aurora-flow-network
     healthcheck:
       test: ["CMD-SHELL", "wget -qO- http://localhost:3100/health || exit 1"]
       interval: 15s
@@ -214,20 +218,20 @@ services:
   # ── Desenvolvimento do erp-lookup (profile: erp-dev) ──────────────────────────
   # MySQL falso para testar o erp-lookup sem tocar no ERP real. Na primeira subida
   # roda erp-lookup/dev/seed.sql. Para apontar o erp-lookup para ele:
-  # ERP_LOOKUP_DB_HOST=erp-mysql-dev ERP_LOOKUP_DB_PASSWORD=tijuca-lookup-dev
+  # ERP_LOOKUP_DB_HOST=erp-mysql-dev ERP_LOOKUP_DB_PASSWORD=aurora-flow-lookup-dev
   erp-mysql-dev:
     image: mysql:8.4
-    container_name: tijucaflow-erp-mysql-dev
+    container_name: aurora-flow-erp-mysql-dev
     restart: unless-stopped
     profiles: [erp-dev]
     environment:
-      MYSQL_ROOT_PASSWORD: ${ERP_DEV_ROOT_PASSWORD:-tijuca-dev}
+      MYSQL_ROOT_PASSWORD: ${ERP_DEV_ROOT_PASSWORD:-aurora-flow-dev}
     ports:
       - "3307:3306"
     volumes:
       - ./erp-lookup/dev:/docker-entrypoint-initdb.d:ro
     networks:
-      - formhub-network
+      - aurora-flow-network
     healthcheck:
       test: ["CMD-SHELL", "mysqladmin ping -h 127.0.0.1 -uroot -p$$MYSQL_ROOT_PASSWORD --silent"]
       interval: 10s
@@ -244,18 +248,18 @@ services:
 
   postgres-exporter:
     image: prometheuscommunity/postgres-exporter:v0.15.0
-    container_name: formhub-postgres-exporter
+    container_name: aurora-flow-postgres-exporter
     restart: unless-stopped
     profiles: [observability]
     environment:
-      DATA_SOURCE_NAME: postgresql://formhub:${DB_PASSWORD:-formhub}@postgres:5432/formhub?sslmode=disable
+      DATA_SOURCE_NAME: postgresql://${DB_USER:-aurora_flow}:${DB_PASSWORD:-aurora_flow}@postgres:5432/${DB_NAME:-aurora_flow}?sslmode=disable
     ports:
       - "9187:9187"
     depends_on:
       postgres:
         condition: service_healthy
     networks:
-      - formhub-network
+      - aurora-flow-network
     deploy:
       resources:
         limits:
@@ -263,7 +267,7 @@ services:
 
   prometheus:
     image: prom/prometheus:v2.55.1
-    container_name: formhub-prometheus
+    container_name: aurora-flow-prometheus
     restart: unless-stopped
     profiles: [observability]
     command:
@@ -278,14 +282,14 @@ services:
     volumes:
       - ./observability/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
       - ./observability/prometheus/metrics_token:/etc/prometheus/metrics_token:ro
-      - formhub_prometheus_data:/prometheus
+      - aurora_flow_prometheus_data:/prometheus
     extra_hosts:
       - "host.docker.internal:host-gateway"
     depends_on:
       postgres-exporter:
         condition: service_started
     networks:
-      - formhub-network
+      - aurora-flow-network
     deploy:
       resources:
         limits:
@@ -293,24 +297,24 @@ services:
 
   grafana:
     image: grafana/grafana:11.4.0
-    container_name: formhub-grafana
+    container_name: aurora-flow-grafana
     restart: unless-stopped
     profiles: [observability]
     environment:
       GF_SECURITY_ADMIN_USER: admin
-      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_ADMIN_PASSWORD:-formhub}
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_ADMIN_PASSWORD:-aurora_flow}
       GF_USERS_ALLOW_SIGN_UP: "false"
     ports:
       - "3001:3000"
     volumes:
-      - formhub_grafana_data:/var/lib/grafana
+      - aurora_flow_grafana_data:/var/lib/grafana
       - ./observability/grafana/provisioning:/etc/grafana/provisioning:ro
       - ./observability/grafana/dashboards:/var/lib/grafana/dashboards:ro
     depends_on:
       prometheus:
         condition: service_started
     networks:
-      - formhub-network
+      - aurora-flow-network
     deploy:
       resources:
         limits:
@@ -318,35 +322,35 @@ services:
 
   pgadmin:
     image: dpage/pgadmin4:latest
-    container_name: formhub-pgadmin
+    container_name: aurora-flow-pgadmin
     restart: unless-stopped
     profiles: [tools]
     environment:
-      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_EMAIL:-admin@tijucaalimentos.com}
-      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_PASSWORD:-formhub}
+      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_EMAIL:-admin@aurora-flow.local}
+      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_PASSWORD:-aurora_flow}
     ports:
       - "5050:80"
     volumes:
-      - formhub_pgadmin_data:/var/lib/pgadmin
+      - aurora_flow_pgadmin_data:/var/lib/pgadmin
     depends_on:
       postgres:
         condition: service_healthy
     networks:
-      - formhub-network
+      - aurora-flow-network
     deploy:
       resources:
         limits:
           memory: 256m
 
 volumes:
-  formhub_pg_data:
-  formhub_rabbitmq_data:
-  formhub_prometheus_data:
-  formhub_grafana_data:
-  formhub_pgadmin_data:
-  formhub_uploads:
+  aurora_flow_pg_data:
+  aurora_flow_rabbitmq_data:
+  aurora_flow_prometheus_data:
+  aurora_flow_grafana_data:
+  aurora_flow_pgadmin_data:
+  aurora_flow_uploads:
   evolution_data:
 
 networks:
-  formhub-network:
+  aurora-flow-network:
     driver: bridge

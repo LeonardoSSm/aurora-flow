@@ -123,7 +123,7 @@ export function setAccessToken(token: string | null): void {
   api.defaults.headers.common.Authorization = `Bearer ${token}`;
 }
 
-// Attempt to restore session from the formhub_refresh cookie (called on app mount).
+// Attempt to restore session from the aurora_flow_refresh cookie (called on app mount).
 // Uses refreshClient so failures never trigger the 401 interceptor chain.
 export async function tryHydrateSession(): Promise<LoginResponse | null> {
   try {

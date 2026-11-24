@@ -9,14 +9,16 @@ import {
   WebhookDeliveryStatus,
 } from '../../database/entities/webhook-delivery.entity';
 import { truncateTextBytes } from '../../database/entities/webhook-entity-helpers';
+import { WEBHOOK_SIGNATURE_HEADER } from '../../common/constants/product';
 import { HmacService } from '../../common/crypto/hmac.service';
+import { assertSafeOutboundUrl } from '../../common/security/outbound-url.guard';
 import { MetricsService } from '../observability/metrics.service';
 
 const DEFAULT_WEBHOOK_TIMEOUT_MS = 10_000;
 const DEFAULT_MAX_ATTEMPTS = 3;
 const MAX_RETRY_BATCH_SIZE = 50;
 const BACKOFF_MS = [30_000, 5 * 60_000, 30 * 60_000] as const;
-const SIGNATURE_HEADER = 'X-FormHub-Signature';
+const SIGNATURE_HEADER = WEBHOOK_SIGNATURE_HEADER;
 const SENSITIVE_HEADER_NAMES = new Set(['authorization', 'proxy-authorization']);
 
 export type OutboundWebhookMethod = 'POST' | 'GET' | 'PUT' | 'PATCH' | 'DELETE';
@@ -47,6 +49,7 @@ export class OutboundWebhookService {
   ) {}
 
   async send(dto: OutboundWebhookDto): Promise<WebhookDeliveryEntity> {
+    await assertSafeOutboundUrl(dto.url);
     const rawBody = this.normalizeBody(dto.body);
     const requestHeaders = this.buildRequestHeaders(dto.headers, dto.signingSecret, rawBody ?? '');
     const delivery = dto.deliveryId

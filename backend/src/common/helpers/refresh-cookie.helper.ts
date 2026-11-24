@@ -1,6 +1,7 @@
 import type { CookieOptions } from 'express';
+import { REFRESH_COOKIE_NAME as PRODUCT_COOKIE } from '../constants/product';
 
-export const REFRESH_COOKIE_NAME = 'formhub_refresh';
+export const REFRESH_COOKIE_NAME = PRODUCT_COOKIE;
 
 /**
  * O cookie de refresh sai `secure` em produção. Navegador nenhum guarda um cookie `secure`

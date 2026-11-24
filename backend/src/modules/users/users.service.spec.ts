@@ -447,4 +447,19 @@ describe('UsersService.ensureSeedAdmin', () => {
 
     expect(hashSpy).toHaveBeenCalledWith('AuroraFlow@123', BCRYPT_COST_FACTOR);
   });
+
+  it('não cria admin semente em produção sem SEED_ADMIN_PASSWORD', async () => {
+    const previousEnv = process.env.NODE_ENV;
+    const previousPassword = process.env.SEED_ADMIN_PASSWORD;
+    process.env.NODE_ENV = 'production';
+    delete process.env.SEED_ADMIN_PASSWORD;
+    repo.findOne.mockResolvedValue(null);
+
+    await service.ensureSeedAdmin();
+
+    expect(repo.save).not.toHaveBeenCalled();
+    process.env.NODE_ENV = previousEnv;
+    if (previousPassword === undefined) delete process.env.SEED_ADMIN_PASSWORD;
+    else process.env.SEED_ADMIN_PASSWORD = previousPassword;
+  });
 });

@@ -27,10 +27,11 @@ function novoServico(partes: Partes = {}) {
     {} as never,
     (partes.engine ?? {}) as never,
     (partes.metricsService ?? {}) as never,
+    { find: jest.fn().mockResolvedValue([]) } as never,
+    {} as never,
     (partes.permissionsService ?? {
       getScope: jest.fn().mockResolvedValue('all'),
     }) as never,
-    { find: jest.fn().mockResolvedValue([]) } as never,
   );
 }
 

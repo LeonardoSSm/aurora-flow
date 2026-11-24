@@ -30,6 +30,10 @@ function makeRepo() {
   };
 }
 
+beforeEach(() => {
+  process.env.HTTP_ALLOW_PRIVATE_URLS = 'true';
+});
+
 function makeService() {
   const repo = makeRepo();
   const configService = {
@@ -198,12 +202,12 @@ describe('OutboundWebhookService', () => {
 
     expect(mockedAxios.request).toHaveBeenCalledWith(
       expect.objectContaining({
-        headers: expect.objectContaining({ 'X-FormHub-Signature': expectedSignature }),
+        headers: expect.objectContaining({ 'X-Aurora-Flow-Signature': expectedSignature }),
       }),
     );
     expect(delivery.requestHeaders).toEqual({
       'Content-Type': 'application/json',
-      'X-FormHub-Signature': expectedSignature,
+      'X-Aurora-Flow-Signature': expectedSignature,
     });
   });
 });

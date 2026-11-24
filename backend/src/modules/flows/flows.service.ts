@@ -21,6 +21,7 @@ import {
   SubmissionItemEntity,
 } from '../../database/entities';
 import { MAX_FLOW_NODES } from '../../common/constants/security.constants';
+import { disabledFlowNodeMessage, isEnabledFlowNodeType } from './flow-capabilities';
 import { SolicitationPriority } from '../../common/enums/solicitation-priority.enum';
 import { SolicitationStatus } from '../../common/enums/solicitation-status.enum';
 import { SolicitationOriginType } from '../../common/enums/solicitation-origin-type.enum';
@@ -50,7 +51,6 @@ import { getNotificationNodeErrors } from './notification/notification-node.vali
 import { hasMalformedTokens } from '../notifications/domain/notification-template';
 import { APPROVAL_EMAIL_BODY_MAX, APPROVAL_EMAIL_SUBJECT_MAX } from './notification/approval-email';
 import {
-  FLOW_NODE_TYPES,
   isFlowTriggerNodeType,
   MAX_FORWARD_FIELD_MAPPINGS,
 } from './types/flow.types';
@@ -141,9 +141,9 @@ export class FlowsService {
     private readonly attachmentsRepo: Repository<AttachmentEntity>,
     private readonly engine: FlowExecutionEngine,
     private readonly metricsService: MetricsService,
-    private readonly processAccess: ProcessAccessService,
     @InjectRepository(KanbanPhaseFieldValueEntity)
     private readonly phaseFieldValuesRepo: Repository<KanbanPhaseFieldValueEntity>,
+    @Optional() private readonly processAccess?: ProcessAccessService,
     @Optional() private readonly rolePermissions?: PermissionsService,
   ) {}
 
@@ -161,9 +161,9 @@ export class FlowsService {
       qb.andWhere('flow.created_by = :flowActorId', { flowActorId: userId });
     } else {
       // Compatibilidade: vínculo legado com processos (ciclo 01 ainda persiste o domínio interno).
-      const grants = await this.processAccess.grantsOf({ sub: userId, role });
-      if (!grants.fullAccess) {
-        const formIds = grants.formIds('flows.view').all;
+      const grants = await this.processAccess?.grantsOf({ sub: userId, role });
+      if (!grants?.fullAccess) {
+        const formIds = grants?.formIds('flows.view').all ?? [];
         const conditions = ['flow.created_by = :flowActorId'];
         if (formIds.length > 0) {
           conditions.push('flow.form_id IN (:...flowFormIds)');
@@ -195,6 +195,7 @@ export class FlowsService {
   }
 
   async findByForm(formId: string, userId: string, role: string): Promise<FlowEntity[]> {
+    if (!this.processAccess) return [];
     const scope = await this.processAccess.scopeIn({ sub: userId, role }, formId, 'flows.view');
     // Fluxo criado na tela de Fluxos não tem form_id: o formulário fica só no nó gatilho. Ele
     // também é do processo (é o que vale na execução — getEffectiveTriggerFormId).
@@ -1336,15 +1337,14 @@ export class FlowsService {
       throw new BadRequestException('Um gatilho não pode receber conexão — ele só inicia o fluxo.');
     }
 
-    const knownTypes = new Set<string>(FLOW_NODE_TYPES);
     const seenIds = new Set<string>();
     for (const node of nodes) {
       if (seenIds.has(node.id)) {
         throw new BadRequestException(`Id de nó repetido: "${node.id}".`);
       }
       seenIds.add(node.id);
-      if (!knownTypes.has(node.type)) {
-        throw new BadRequestException(`Tipo de nó inválido: "${node.type}".`);
+      if (!isEnabledFlowNodeType(node.type)) {
+        throw new BadRequestException(disabledFlowNodeMessage(node.type));
       }
       this.validateNodeData(node, currentFlowId);
     }
@@ -1897,7 +1897,7 @@ export class FlowsService {
     if (flow.createdBy === userId) return flow;
     const systemScope = (await this.rolePermissions?.getScope(role, permissionCode)) ?? 'none';
     if (systemScope === 'all' || systemScope === 'area') return flow;
-    const grants = await this.processAccess.grantsOf({ sub: userId, role });
+    const grants = await this.processAccess?.grantsOf({ sub: userId, role });
     const homeForms = new Set<string>();
     if (flow.formId) homeForms.add(flow.formId);
     for (const node of flow.nodes ?? []) {
@@ -1905,8 +1905,8 @@ export class FlowsService {
       const formId = this.getEffectiveTriggerFormId(flow, node);
       if (formId) homeForms.add(formId);
     }
-    const allowed =
-      grants.fullAccess || [...homeForms].some((formId) => grants.scope(formId, permissionCode) !== 'none');
+    if (grants?.fullAccess) return flow;
+    const allowed = [...homeForms].some((formId) => grants?.scope(formId, permissionCode) !== 'none');
     if (!allowed) throw new NotFoundException('Fluxo não encontrado.');
     return flow;
   }

@@ -1,4 +1,4 @@
-import { FLOW_NODE_TYPES, isFlowTriggerNodeType } from '../types/flow.types';
+import { ENABLED_FLOW_NODE_TYPES, FLOW_NODE_TYPES, isFlowTriggerNodeType } from '../types/flow.types';
 import type { FlowEdge, FlowNode, FlowNodeData } from '../types/flow.types';
 import { MAX_EXTERNAL_APPROVERS } from '../../../lib/email-list';
 import { getNotificationConfigError } from './notification-config';
@@ -55,6 +55,8 @@ export function validateFlow(nodes: FlowNode[], edges: FlowEdge[]): ValidationEr
 
     if (!(FLOW_NODE_TYPES as readonly string[]).includes(node.type)) {
       msg = `Nó "${label}": tipo de nó inválido.`;
+    } else if (!(ENABLED_FLOW_NODE_TYPES as readonly string[]).includes(node.type)) {
+      msg = `Nó "${label}": este tipo foi descontinuado no Aurora Flow.`;
     } else if (
       node.type === 'trigger_webhook_received' &&
       d.payloadFilters !== undefined &&

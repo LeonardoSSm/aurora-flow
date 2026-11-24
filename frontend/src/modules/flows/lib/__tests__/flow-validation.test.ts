@@ -4,7 +4,7 @@ import type { FlowEdge, FlowNode, FlowNodeType } from '../../types/flow.types';
 
 // ── helpers ──────────────────────────────────────────────────────────────
 
-function trigger(id = 'trigger', type: FlowNodeType = 'trigger_form_submit'): FlowNode {
+function trigger(id = 'trigger', type: FlowNodeType = 'trigger_webhook_received'): FlowNode {
   return { id, type, position: { x: 0, y: 0 }, data: {} };
 }
 
@@ -33,6 +33,18 @@ function edge(source: string, target: string): FlowEdge {
 describe('validateFlow — empty canvas', () => {
   it('returns no errors for an empty canvas', () => {
     expect(validateFlow([], [])).toHaveLength(0);
+  });
+});
+
+describe('validateFlow — nós descontinuados', () => {
+  it('rejeita gatilhos e ações de formulário/solicitação', () => {
+    const nodes = [
+      trigger('t1', 'trigger_form_submit'),
+      flowNode('a1', 'action_create_solicitation_from_payload', { titleTemplate: 'X', formId: 'f1' }),
+    ];
+    const errors = validateFlow(nodes, [edge('t1', 'a1')]);
+    expect(errors.filter((e) => e.type === 'unconfigured_node')).toHaveLength(2);
+    expect(errors.every((e) => e.message.includes('descontinuado'))).toBe(true);
   });
 });
 
@@ -159,8 +171,8 @@ describe('validateFlow — várias entradas (multiple_triggers)', () => {
 
   it('com mais de um gatilho, acusa o que não leva a nenhum nó', () => {
     const nodes = [
-      trigger('t1', 'trigger_solicitation_created'),
-      trigger('t2', 'trigger_approval_completed'),
+      trigger('t1', 'trigger_webhook_received'),
+      trigger('t2', 'trigger_webhook_received'),
       emailNode('e1', 'a@b.com'),
     ];
     const errors = validateFlow(nodes, [edge('t1', 'e1')]);
@@ -210,7 +222,7 @@ describe('validateFlow — webhook trigger', () => {
 
 // ── validateFlow — solicitation nodes ─────────────────────────────────────
 
-describe('validateFlow — solicitation nodes', () => {
+describe.skip('REMOVED cycle-02 validateFlow — solicitation nodes', () => {
   it('accepts configured solicitation status condition', () => {
     const nodes = [
       trigger('t1', 'trigger_solicitation_created'),
@@ -461,7 +473,7 @@ describe('validateFlow — solicitation nodes', () => {
 
 // ── validateFlow — SLA triggers ──────────────────────────────────────────
 
-describe('validateFlow — SLA triggers', () => {
+describe.skip('REMOVED cycle-02 validateFlow — SLA triggers', () => {
   it('aceita trigger_sla_warning como gatilho válido', () => {
     const nodes = [trigger('t1', 'trigger_sla_warning')];
     const errors = validateFlow(nodes, []);
@@ -479,7 +491,7 @@ describe('validateFlow — SLA triggers', () => {
   it('trigger_sla_warning pode ser uma entrada a mais do fluxo', () => {
     const nodes = [
       trigger('t1', 'trigger_sla_warning'),
-      trigger('t2', 'trigger_form_submit'),
+      trigger('t2', 'trigger_webhook_received'),
       emailNode('e1', 'a@b.com'),
     ];
     const errors = validateFlow(nodes, [edge('t1', 'e1'), edge('t2', 'e1')]);
@@ -606,14 +618,14 @@ describe('validateFlow — trigger_scheduled', () => {
 
 describe('validateFlow — action_http_check', () => {
   it('flags a check action without url', () => {
-    const nodes = [trigger('t1', 'trigger_scheduled'), flowNode('a1', 'action_http_check', {})];
+    const nodes = [trigger('t1', 'trigger_webhook_received'), flowNode('a1', 'action_http_check', {})];
     const errors = validateFlow(nodes, [edge('t1', 'a1')]);
     expect(errors.some((e) => e.type === 'unconfigured_node' && e.nodeId === 'a1')).toBe(true);
   });
 
   it('accepts a configured check action', () => {
     const nodes = [
-      trigger('t1', 'trigger_scheduled'),
+      trigger('t1', 'trigger_webhook_received'),
       flowNode('a1', 'action_http_check', { url: 'https://api.example.com/status', method: 'GET' }),
     ];
     const errors = validateFlow(nodes, [edge('t1', 'a1')]);
@@ -621,7 +633,7 @@ describe('validateFlow — action_http_check', () => {
   });
 });
 
-describe('validateFlow — trigger_attachment_uploaded', () => {
+describe.skip('REMOVED cycle-02 validateFlow — trigger_attachment_uploaded', () => {
   it('accepts the trigger with no configuration at all', () => {
     const nodes = [trigger('t1', 'trigger_attachment_uploaded')];
     const errors = validateFlow(nodes, []);
@@ -638,7 +650,7 @@ describe('validateFlow — trigger_attachment_uploaded', () => {
   });
 });
 
-describe('validateFlow — action_ai_agent (LOPS IA)', () => {
+describe.skip('REMOVED cycle-02 validateFlow — action_ai_agent (LOPS IA)', () => {
   it('flags a node with no agent chosen from the list', () => {
     const nodes = [
       trigger('t1', 'trigger_attachment_uploaded'),
@@ -680,7 +692,7 @@ describe('validateFlow — action_ai_agent (LOPS IA)', () => {
   });
 });
 
-describe('validateFlow — action_wait_for_phase_fields', () => {
+describe.skip('REMOVED cycle-02 validateFlow — action_wait_for_phase_fields', () => {
   it('flags a missing phaseId', () => {
     const nodes = [
       trigger('t1', 'trigger_attachment_uploaded'),
@@ -703,7 +715,7 @@ describe('validateFlow — action_wait_for_phase_fields', () => {
   });
 });
 
-describe('validateFlow — action_move_phase', () => {
+describe.skip('REMOVED cycle-02 validateFlow — action_move_phase', () => {
   it('flags a missing phaseId', () => {
     const nodes = [
       trigger('t1', 'trigger_attachment_uploaded'),
@@ -726,7 +738,7 @@ describe('validateFlow — action_move_phase', () => {
   });
 });
 
-describe('validateFlow — action_create_approval com scope: phase', () => {
+describe.skip('REMOVED cycle-02 validateFlow — action_create_approval com scope: phase', () => {
   it('accepts approverSourceMode phase_role without assignedUserIds/approversPath', () => {
     const nodes = [
       trigger('t1', 'trigger_attachment_uploaded'),
@@ -753,7 +765,7 @@ describe('validateFlow — action_create_approval com scope: phase', () => {
   });
 });
 
-describe('validateFlow — trigger_phase_field_saved', () => {
+describe.skip('REMOVED cycle-02 validateFlow — trigger_phase_field_saved', () => {
   it('accepts the trigger with no configuration at all', () => {
     const nodes = [trigger('t1', 'trigger_phase_field_saved')];
     const errors = validateFlow(nodes, []);
@@ -770,7 +782,7 @@ describe('validateFlow — trigger_phase_field_saved', () => {
   });
 });
 
-describe('validateFlow — condition_approval_result', () => {
+describe.skip('REMOVED cycle-02 validateFlow — condition_approval_result', () => {
   it('flags a missing or invalid operator/value', () => {
     const nodes = [
       trigger('t1', 'trigger_attachment_uploaded'),
@@ -802,7 +814,7 @@ describe('validateFlow — condition_approval_result', () => {
 describe('validateFlow — condition_response_value', () => {
   it('flags a response-value condition without path', () => {
     const nodes = [
-      trigger('t1', 'trigger_scheduled'),
+      trigger('t1', 'trigger_webhook_received'),
       flowNode('c1', 'condition_response_value', { operator: 'equals', value: 'ok' }),
     ];
     const errors = validateFlow(nodes, [edge('t1', 'c1')]);
@@ -811,7 +823,7 @@ describe('validateFlow — condition_response_value', () => {
 
   it('flags a response-value condition with invalid operator', () => {
     const nodes = [
-      trigger('t1', 'trigger_scheduled'),
+      trigger('t1', 'trigger_webhook_received'),
       flowNode('c1', 'condition_response_value', { path: 'data.status', operator: 'invalid' }),
     ];
     const errors = validateFlow(nodes, [edge('t1', 'c1')]);
@@ -820,7 +832,7 @@ describe('validateFlow — condition_response_value', () => {
 
   it('accepts a configured response-value condition', () => {
     const nodes = [
-      trigger('t1', 'trigger_scheduled'),
+      trigger('t1', 'trigger_webhook_received'),
       flowNode('c1', 'condition_response_value', {
         path: 'data.status',
         operator: 'equals',

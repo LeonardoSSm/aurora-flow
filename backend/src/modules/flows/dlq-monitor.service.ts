@@ -38,10 +38,10 @@ export class DlqMonitorService {
   private async fetchDlqQueues(): Promise<DlqQueueInfo[]> {
     const managementUrl = this.configService.get<string>(
       'RABBITMQ_MANAGEMENT_URL',
-      'http://localhost:15672',
+      'http://localhost:15674',
     );
-    const user = this.configService.get<string>('RABBITMQ_USER', 'formhub');
-    const password = this.configService.get<string>('RABBITMQ_PASSWORD', 'formhub');
+    const user = this.configService.get<string>('RABBITMQ_USER', 'aurora_flow');
+    const password = this.configService.get<string>('RABBITMQ_PASSWORD', 'aurora_flow');
 
     const credentials = Buffer.from(`${user}:${password}`).toString('base64');
     const response = await fetch(`${managementUrl}/api/queues`, {

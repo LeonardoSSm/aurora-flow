@@ -16,7 +16,7 @@ export class JwtRefreshStrategy extends PassportStrategy(Strategy, 'jwt-refresh'
       jwtFromRequest: ExtractJwt.fromExtractors([
         ExtractJwt.fromAuthHeaderAsBearerToken(),
         (req: Request) =>
-          (req.cookies as Record<string, string> | undefined)?.['formhub_refresh'] ?? null,
+          (req.cookies as Record<string, string> | undefined)?.['aurora_flow_refresh'] ?? null,
         // mobile clients cannot send HttpOnly cookies — accept token from body as fallback
         (req: Request) =>
           (req.body as { refreshToken?: string } | undefined)?.refreshToken ?? null,
